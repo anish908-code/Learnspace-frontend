@@ -114,7 +114,7 @@ const ProjectDetail = () => {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {[
                             { id: "github_link", label: "GitHub Link *", type: "url", required: true, placeholder: "https://github.com/username/repo" },
-                            { id: "live_demo", label: "Live Demo Link", type: "url", placeholder: "https://your-demo.vercel.app" },
+                            { id: "live_demo", label: "Live Demo Link", type: "url", placeholder: "https://your-demo-link.com" },
                         ].map((field) => (
                             <div key={field.id}>
                                 <label htmlFor={field.id} className="label-text">{field.label}</label>

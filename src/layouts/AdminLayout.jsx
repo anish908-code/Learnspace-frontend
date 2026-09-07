@@ -21,7 +21,7 @@ import {
 
 import { logoutUser, updateUser } from "../features/auth/authSlice";
 import { updateAdminProfile } from "../api/adminApi";
-import { uploadToCloudinary } from "../utils/cloudinary";
+import { uploadImage } from "../utils/upload";
 import Avatar from "../components/common/Avatar";
 
 const navItems = [
@@ -81,7 +81,7 @@ const AdminLayout = () => {
         setUploading(true);
 
         try {
-            const url = await uploadToCloudinary(file);
+            const url = await uploadImage(file);
             const response = await updateAdminProfile({ profile_image: url });
 
             if (response.data?.user) {

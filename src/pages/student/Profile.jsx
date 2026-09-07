@@ -5,7 +5,7 @@ import { Pencil, Mail, BadgeCheck, Camera } from "lucide-react";
 
 import { fetchProfile, saveProfile, clearProfileError } from "../../features/student/profileSlice";
 import Avatar from "../../components/common/Avatar";
-import { uploadToCloudinary } from "../../utils/cloudinary";
+import { uploadImage } from "../../utils/upload";
 import { Skeleton, SkeletonLine } from "../../components/common/Skeleton";
 
 function ProfileForm({ profile, saving, validationErrors, onSave, onCancel }) {
@@ -29,7 +29,7 @@ function ProfileForm({ profile, saving, validationErrors, onSave, onCancel }) {
         setThumbUploading(true);
         setThumbError(null);
         try {
-            const url = await uploadToCloudinary(file);
+            const url = await uploadImage(file);
             setFormData((prev) => ({ ...prev, profile_image: url }));
         } catch (err) { setThumbError(err.message || "Upload failed"); }
         finally { setThumbUploading(false); }
