@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================================================
+   DESIGN TOKENS — CSS Custom Properties
+   ================================================================ */
+
+:root {
+  --background:      #F0EEE9;
+  --foreground:      #1A1A1A;
+  --muted:           #E9E6DF;
+  --muted-foreground:#5F5F5F;
+  --accent:          #B8860B;
+  --accent-secondary:#D4A84B;
+  --accent-foreground:#FFFFFF;
+  --border:          #DDD8D0;
+  --card:            #FFFFFF;
+  --ring:            #B8860B;
+  --error:           #9B2C2C;
+  --error-bg:        #FEF2F2;
+  --success:         #276749;
+  --success-bg:      #F0FFF4;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================================================
+   SHARED COMPONENT CLASSES
+   ================================================================ */
+
+@layer components {
+  /* Primary button — burnished gold */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5
+      text-sm font-semibold tracking-wide transition-all duration-200 ease-out
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+      disabled:cursor-not-allowed disabled:opacity-50;
+    background: var(--accent);
+    color: var(--accent-foreground);
+    box-shadow: 0 1px 2px rgba(184,134,11,0.15);
+    min-height: 44px;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-secondary);
+    box-shadow: 0 4px 14px rgba(184,134,11,0.25);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .btn-primary:focus-visible {
+    --tw-ring-color: var(--accent);
+  }
+
+  /* Secondary / outline button */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5
+      text-sm font-semibold tracking-wide border transition-all duration-200 ease-out
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+      disabled:cursor-not-allowed disabled:opacity-50;
+    border-color: var(--foreground);
+    color: var(--foreground);
+    background: transparent;
+    min-height: 44px;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--muted);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-secondary:focus-visible {
+    --tw-ring-color: var(--accent);
+  }
+
+  /* Ghost button — underline on hover */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5
+      text-sm font-medium transition-all duration-200 ease-out
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+      disabled:cursor-not-allowed disabled:opacity-50;
+    color: var(--muted-foreground);
+    background: transparent;
+    min-height: 44px;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--foreground);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 4px;
+  }
+  .btn-ghost:focus-visible {
+    --tw-ring-color: var(--accent);
+  }
+
+  /* Card */
+  .card {
+    @apply rounded-lg border transition-all duration-200;
+    border-color: var(--border);
+    background: var(--card);
+    box-shadow: 0 1px 2px rgba(26,26,26,0.04);
+  }
+
+  .card-hover {
+    @apply card;
+  }
+  .card-hover:hover {
+    box-shadow: 0 4px 12px rgba(26,26,26,0.06);
+    border-color: #D6D2CD;
+  }
+
+  /* Input field */
+  .input-field {
+    @apply w-full rounded-md border px-4 py-3 transition-all duration-150 ease-out
+      placeholder:opacity-50
+      focus:outline-none focus:ring-2 focus:ring-offset-2;
+    border-color: var(--border);
+    color: var(--foreground);
+    background: var(--card);
+    font-size: 0.95rem;
+    min-height: 46px;
+  }
+  .input-field:focus {
+    border-color: var(--accent);
+    --tw-ring-color: var(--accent);
+    background: var(--card);
+  }
+
+  /* Label text */
+  .label-text {
+    @apply mb-2 block font-medium;
+    color: var(--foreground);
+    font-family: "Source Sans 3", system-ui, sans-serif;
+    font-size: 0.95rem;
+  }
+
+  /* Page title — serif headline */
+  .page-title {
+    @apply text-2xl tracking-tight;
+    font-family: "Playfair Display", Georgia, serif;
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  /* Section label — small caps monospace */
+  .section-label {
+    @apply text-xs font-medium uppercase;
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+  }
+
+  /* Rule line — thin editorial divider */
+  .rule-line {
+    @apply h-px w-full;
+    background: var(--border);
+  }
+
+  /* Accent top border on cards */
+  .card-accent-top {
+    @apply card;
+    border-top: 2px solid var(--accent);
+  }
+}
+
+/* ================================================================
+   SKELETON LOADING — SHIMMER EFFECT
+   ================================================================ */
+
+@keyframes skeleton-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+.skeleton {
+  @apply relative overflow-hidden;
+  background: #EDE9E5;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0,
+    rgba(255,255,255,0.5) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}

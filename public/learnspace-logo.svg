@@ -1,0 +1,35 @@
+<svg width="900" height="260" viewBox="0 0 900 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">LearnSpace logo</title>
+  <desc id="desc">A gold open book with a learning spark beside the LearnSpace wordmark</desc>
+
+  <defs>
+    <linearGradient id="gold" x1="36" y1="38" x2="214" y2="218" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D4A84B"/>
+      <stop offset="1" stop-color="#B8860B"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="250" height="260" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#B8860B" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <path d="M39 83C72 66 108 69 141 91V207C108 185 72 182 39 199V83Z" fill="#FFFDF8" stroke="url(#gold)" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M141 91C174 69 210 66 243 83V199C210 182 174 185 141 207V91Z" fill="#FFF8E8" stroke="url(#gold)" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M141 91V207" stroke="#B8860B" stroke-width="8" stroke-linecap="round"/>
+    <path d="M59 105C83 96 107 99 126 111" stroke="#D4A84B" stroke-width="6" stroke-linecap="round"/>
+    <path d="M59 132C83 123 106 126 126 138" stroke="#D4A84B" stroke-width="6" stroke-linecap="round"/>
+    <path d="M156 111C175 99 199 96 223 105" stroke="#D4A84B" stroke-width="6" stroke-linecap="round"/>
+    <path d="M156 138C176 126 199 123 223 132" stroke="#D4A84B" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g fill="#B8860B">
+    <path d="M141 28L148 49L169 56L148 63L141 84L134 63L113 56L134 49L141 28Z"/>
+    <circle cx="190" cy="42" r="5"/>
+    <circle cx="105" cy="42" r="5"/>
+  </g>
+
+  <text x="285" y="151" fill="#1A1A1A" font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="700" letter-spacing="-2">Learn</text>
+  <text x="571" y="151" fill="#B8860B" font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="700" letter-spacing="-2">Space</text>
+  <path d="M291 181H785" stroke="#D4A84B" stroke-width="4" stroke-linecap="round"/>
+  <text x="292" y="213" fill="#5F5F5F" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="600" letter-spacing="5">LEARN • PRACTICE • GROW</text>
+</svg>
