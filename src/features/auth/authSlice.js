@@ -218,6 +218,10 @@ const authSlice = createSlice({
                 state.error = null;
                 state.validationErrors = null;
 
+                if (action.payload.token) {
+                    localStorage.setItem("learnspace_token", action.payload.token);
+                }
+
                 toast.success("Registration successful!");
             })
 
@@ -255,6 +259,10 @@ const authSlice = createSlice({
 
                 state.error = null;
                 state.validationErrors = null;
+
+                if (action.payload.token) {
+                    localStorage.setItem("learnspace_token", action.payload.token);
+                }
 
                 toast.success("Login successful!");
             })
@@ -331,6 +339,8 @@ const authSlice = createSlice({
 
                 state.error = null;
                 state.validationErrors = null;
+
+                localStorage.removeItem("learnspace_token");
             })
 
             .addCase(logoutUser.rejected, (state, action) => {
@@ -346,6 +356,8 @@ const authSlice = createSlice({
 
                 state.error =
                     action.payload?.message || null;
+
+                localStorage.removeItem("learnspace_token");
             })
 
             /*
