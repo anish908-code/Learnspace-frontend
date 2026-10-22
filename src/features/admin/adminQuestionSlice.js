@@ -4,9 +4,7 @@ import { toast } from "react-toastify";
 import { getApiError } from "../../utils/api";
 import {
     getQuizQuestions,
-    createQuestion,
     bulkCreateQuestions,
-    updateQuestion,
     deleteQuestion,
 } from "../../api/adminApi";
 
@@ -34,23 +32,6 @@ export const fetchAdminQuestions = createAsyncThunk(
     }
 );
 
-export const addQuestion = createAsyncThunk(
-    "adminQuestions/create",
-
-    async ({ quizId, data }, { rejectWithValue }) => {
-        try {
-            const response = await createQuestion(quizId, data);
-
-            return {
-                message: response.data.message,
-                question: response.data.question,
-            };
-        } catch (error) {
-            return rejectWithValue(getApiError(error));
-        }
-    }
-);
-
 export const bulkAddQuestions = createAsyncThunk(
     "adminQuestions/bulkCreate",
 
@@ -61,23 +42,6 @@ export const bulkAddQuestions = createAsyncThunk(
             return {
                 message: response.data.message,
                 questions: response.data.questions,
-            };
-        } catch (error) {
-            return rejectWithValue(getApiError(error));
-        }
-    }
-);
-
-export const editQuestion = createAsyncThunk(
-    "adminQuestions/update",
-
-    async ({ quizId, id, data }, { rejectWithValue }) => {
-        try {
-            const response = await updateQuestion(quizId, id, data);
-
-            return {
-                message: response.data.message,
-                question: response.data.question,
             };
         } catch (error) {
             return rejectWithValue(getApiError(error));
@@ -148,32 +112,6 @@ const adminQuestionSlice = createSlice({
                 state.error = action.payload?.message || null;
             })
 
-            .addCase(addQuestion.pending, (state) => {
-                state.saving = true;
-                state.successMessage = null;
-                state.error = null;
-                state.validationErrors = null;
-            })
-
-            .addCase(addQuestion.fulfilled, (state, action) => {
-                state.saving = false;
-                state.successMessage = action.payload.message;
-                toast.success(action.payload.message);
-
-                if (
-                    !state.questions.some((q) => q.id === action.payload.question.id)
-                ) {
-                    state.questions.push(action.payload.question);
-                }
-            })
-
-            .addCase(addQuestion.rejected, (state, action) => {
-                state.saving = false;
-                state.error = action.payload?.message || null;
-                state.validationErrors = action.payload?.errors || null;
-                toast.error(action.payload?.message || "Failed to create question.");
-            })
-
             .addCase(bulkAddQuestions.pending, (state) => {
                 state.saving = true;
                 state.successMessage = null;
@@ -198,34 +136,6 @@ const adminQuestionSlice = createSlice({
                 state.error = action.payload?.message || null;
                 state.validationErrors = action.payload?.errors || null;
                 toast.error(action.payload?.message || "Failed to import questions.");
-            })
-
-            .addCase(editQuestion.pending, (state) => {
-                state.saving = true;
-                state.successMessage = null;
-                state.error = null;
-                state.validationErrors = null;
-            })
-
-            .addCase(editQuestion.fulfilled, (state, action) => {
-                state.saving = false;
-                state.successMessage = action.payload.message;
-                toast.success(action.payload.message);
-
-                const index = state.questions.findIndex(
-                    (question) => question.id === action.payload.question.id
-                );
-
-                if (index !== -1) {
-                    state.questions[index] = action.payload.question;
-                }
-            })
-
-            .addCase(editQuestion.rejected, (state, action) => {
-                state.saving = false;
-                state.error = action.payload?.message || null;
-                state.validationErrors = action.payload?.errors || null;
-                toast.error(action.payload?.message || "Failed to update question.");
             })
 
             .addCase(removeQuestion.pending, (state) => {

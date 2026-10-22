@@ -4,13 +4,52 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LearnSpace</title>
+    <meta name="theme-color" content="#DBDCD4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#06070A" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="description"
+      content="LearnSpace — a project-based learning platform. Enrol in courses, complete lessons, pass the final quiz, submit projects and earn verified certificates."
+    />
+    <title>LearnSpace — Learn Skills. Track Progress. Master Craft.</title>
+
+    <!--
+      Typography — "Editorial Luxury":
+        display  Fraunces  (variable serif — high contrast, Art Deco flavour)
+        body     Inter     (UI + paragraphs, unchanged)
+        mono     JetBrains Mono (technical labels, unchanged)
+      Fraunces ke opsz axis ko browser size ke hisaab se optimize karne
+      dete hain, isliye chhote headings aur bade hero dono sahi dikhte hain.
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!--
+      Theme boot: light/dark class paint se pehle set ho jaati hai, isliye
+      first frame me bhi sahi lighting hoti hai (no flash of wrong theme).
+    -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("learnspace_theme");
+          var mode =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          var root = document.documentElement;
+          root.classList.toggle("dark", mode === "dark");
+          root.style.colorScheme = mode;
+          root.dataset.theme = mode;
+        } catch (e) {
+          /* localStorage blocked — default light rehne do */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

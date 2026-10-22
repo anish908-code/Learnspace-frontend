@@ -2,17 +2,19 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import { Award, Download, ExternalLink, Loader2, BookOpen, Hash, Medal } from "lucide-react";
+import { Award, ExternalLink, BookOpen, Hash, Medal } from "lucide-react";
 
 import {
     fetchCertificates,
     clearCertificateError,
 } from "../../features/student/certificateSlice";
 import { getCertificateDetail } from "../../api/studentApi";
-import { generateQrDataUrl, downloadCertificatePdf } from "../../utils/certificate";
+import { downloadCertificatePdf, generateCertificateQr } from "../../utils/certificate";
 import { formatDate } from "../../utils/date";
-import { PageHeader, AlertBanner } from "../../components/common";
+import { PageHeader, AlertBanner, EmptyState } from "../../components/common";
+import { Skeleton, SkeletonLine } from "../../components/common/Skeleton";
 import CertificatePaper from "../../components/CertificatePaper";
+import Button from "../../components/ui/Button";
 
 const Certificates = () => {
     const dispatch = useDispatch();
@@ -24,8 +26,8 @@ const Certificates = () => {
     const { user } = useSelector((state) => state.auth);
 
     const [downloadingId, setDownloadingId] = useState(null);
-    const [qrUrls, setQrUrls] = useState({});
     const [activeCert, setActiveCert] = useState(null);
+    const [qrDataUrl, setQrDataUrl] = useState(null);
     const hiddenRef = useRef(null);
 
     useEffect(() => {
@@ -34,24 +36,6 @@ const Certificates = () => {
             dispatch(clearCertificateError());
         };
     }, [dispatch]);
-
-    // Load QR only for certificate detail views (used on hidden paper for PDF)
-    const loadQr = useCallback(async (cert) => {
-        if (qrUrls[cert.id]) return;
-        try {
-            const url = await generateQrDataUrl(
-                cert?.verification_url ||
-                    `${window.location.origin}/certificates/verify/${cert.certificate_code || ""}`
-            );
-            setQrUrls((prev) => ({ ...prev, [cert.id]: url }));
-        } catch {
-            /* ignore QR errors */
-        }
-    }, [qrUrls]);
-
-    useEffect(() => {
-        certificates.forEach((cert) => loadQr(cert));
-    }, [certificates, loadQr]);
 
     const handleDownloadPdf = useCallback(
         async (certId) => {
@@ -63,23 +47,13 @@ const Certificates = () => {
                 const studentName = cert?.student?.user?.name || user?.name || "Student";
                 setDownloadingId(certId);
                 setActiveCert(cert);
-
-                if (!qrUrls[certId]) {
-                    const url = await generateQrDataUrl(
-                        cert?.verification_url ||
-                            `${window.location.origin}/certificates/verify/${cert.certificate_code || ""}`
-                    );
-                    setQrUrls((prev) => ({ ...prev, [certId]: url }));
-                }
-
-                // Allow the hidden paper (with loaded QR) to render before capture.
-                await new Promise((resolve) => setTimeout(resolve, 60));
+                setQrDataUrl(await generateCertificateQr(cert));
 
                 if (!hiddenRef.current) throw new Error("Certificate element not found");
 
                 await downloadCertificatePdf({
                     node: hiddenRef.current,
-                    filename: `${cert.certificate_code || "certificate"}-${studentName
+                    filename: `${cert.certificate_number || "certificate"}-${studentName
                         .toLowerCase()
                         .replace(/\s+/g, "-")}`,
                 });
@@ -88,6 +62,7 @@ const Certificates = () => {
             } finally {
                 setDownloadingId(null);
                 setActiveCert(null);
+                setQrDataUrl(null);
             }
         },
         [user]
@@ -106,22 +81,23 @@ const Certificates = () => {
 
     if (loading && certificates.length === 0) {
         return (
-            <div className="space-y-6">
-                <h1 className="page-title">My Certificates</h1>
+            <div>
+                <PageHeader eyebrow="earned credentials" title="My Certificates" />
+
                 <div className="space-y-4">
                     {Array.from({ length: 3 }, (_, i) => (
-                        <div key={i} className="card overflow-hidden">
-                            <div className="flex items-center justify-between gap-4 p-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="skeleton h-12 w-12 shrink-0 rounded-lg" />
-                                    <div className="space-y-2">
-                                        <div className="skeleton h-4 w-48 rounded-full" />
-                                        <div className="skeleton h-3 w-32 rounded-full" />
-                                    </div>
+                        <div key={i} className="card p-5 sm:p-6">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
+
+                                <div className="min-w-0 flex-1">
+                                    <SkeletonLine className="h-4 w-48" />
+                                    <SkeletonLine className="mt-2.5 h-3 w-32" />
                                 </div>
-                                <div className="flex shrink-0 gap-2">
-                                    <div className="skeleton h-9 w-20 rounded-md" />
-                                    <div className="skeleton h-9 w-24 rounded-md" />
+
+                                <div className="hidden shrink-0 gap-2 sm:flex">
+                                    <Skeleton className="h-10 w-20 rounded-xl" />
+                                    <Skeleton className="h-10 w-28 rounded-xl" />
                                 </div>
                             </div>
                         </div>
@@ -134,7 +110,8 @@ const Certificates = () => {
     if (error) {
         return (
             <>
-                <h1 className="page-title">My Certificates</h1>
+                <PageHeader eyebrow="earned credentials" title="My Certificates" />
+
                 <AlertBanner type="error" message={error} />
             </>
         );
@@ -143,82 +120,85 @@ const Certificates = () => {
     return (
         <div>
             <PageHeader
+                eyebrow="earned credentials"
                 title="My Certificates"
                 subtitle={`Total ${certificates.length} certificate(s) earned.`}
             />
 
             {certificates.length === 0 ? (
-                <div className="card p-12 text-center">
-                    <Award size={32} className="mx-auto" style={{ color: "var(--border)" }} />
-                    <p className="mt-3 font-semibold" style={{ color: "var(--foreground)" }}>
-                        No certificates yet
-                    </p>
-                    <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                        Complete a course and pass its quiz to earn a certificate.
-                    </p>
-                </div>
+                <EmptyState
+                    icon={Award}
+                    title="No certificates yet"
+                    message="Complete a course and pass its quiz to earn a certificate."
+                />
             ) : (
                 <div className="space-y-4">
                     {certificates.map((certificate) => (
-                        <div
-                            key={certificate.id}
-                            className="card overflow-hidden"
-                            style={{ borderTop: "3px solid var(--accent)" }}
-                        >
-                            <div className="flex flex-wrap items-center gap-4 p-5">
+                        <article key={certificate.id} className="card-accent-top overflow-hidden">
+                            <div className="flex flex-wrap items-center gap-4 p-5 sm:p-6">
                                 {/* Award icon */}
-                                <span
-                                    className="flex shrink-0 items-center justify-center rounded-xl"
-                                    style={{ width: 44, height: 44, background: "rgba(184,134,11,0.12)", color: "var(--accent)" }}
-                                >
-                                    <BookOpen size={22} />
+                                <span className="icon-well h-11 w-11 shrink-0 text-gold">
+                                    <BookOpen size={20} strokeWidth={2} />
                                 </span>
 
                                 {/* Certificate info */}
-                                <div className="min-w-0 flex-1 space-y-1.5">
-                                    <p className="truncate font-semibold" style={{ color: "var(--foreground)" }}>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate font-display text-sm font-bold text-fg">
                                         {certificate.course?.title || `Course #${certificate.course_id}`}
                                     </p>
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <Hash size={14} style={{ color: "var(--accent)" }} />
-                                            <span className="font-mono text-xs">
-                                                {certificate.certificate_code || certificate.certificate_number || "—"}
+
+                                    <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2">
+                                        <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+                                            <Hash
+                                                size={14}
+                                                strokeWidth={2.2}
+                                                aria-hidden="true"
+                                                className="shrink-0 text-accent"
+                                            />
+                                            <span className="numeric truncate text-xs text-muted">
+                                                {certificate.certificate_number || "—"}
                                             </span>
                                         </span>
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <Medal size={14} style={{ color: "var(--accent)" }} />
+
+                                        <span className="inline-flex items-center gap-1.5 text-sm text-muted">
+                                            <Medal
+                                                size={14}
+                                                strokeWidth={2.2}
+                                                aria-hidden="true"
+                                                className="shrink-0 text-accent"
+                                            />
                                             Score: {renderScore(certificate)}
                                         </span>
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <Award size={14} style={{ color: "var(--accent)" }} />
+
+                                        <span className="inline-flex items-center gap-1.5 text-sm text-muted">
+                                            <Award
+                                                size={14}
+                                                strokeWidth={2.2}
+                                                aria-hidden="true"
+                                                className="shrink-0 text-gold"
+                                            />
                                             Issued: {formatDate(certificate.issue_date)}
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex shrink-0 items-center gap-2">
-                                    <button type="button" onClick={() => handleView(certificate.id)} className="btn-secondary text-sm">
+                                <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+                                    <Button type="button" onClick={() => handleView(certificate.id)} variant="secondary">
                                         <ExternalLink size={15} />
                                         View
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         type="button"
                                         onClick={() => handleDownloadPdf(certificate.id)}
-                                        disabled={downloadingId === certificate.id}
-                                        className="btn-primary text-sm"
+                                        loading={downloadingId === certificate.id}
+                                        loadingText="Download"
                                     >
-                                        {downloadingId === certificate.id ? (
-                                            <Loader2 size={15} className="animate-spin" />
-                                        ) : (
-                                            <Download size={15} />
-                                        )}
-                                        {downloadingId === certificate.id ? "Generating..." : "Download"}
-                                    </button>
+                                        Download
+                                    </Button>
                                 </div>
                             </div>
-                        </div>
+                        </article>
                     ))}
                 </div>
             )}
@@ -236,7 +216,7 @@ const Certificates = () => {
                     aria-hidden="true"
                 >
                     <div ref={hiddenRef}>
-                        <CertificatePaper certificate={activeCert} qrDataUrl={qrUrls[activeCert.id]} />
+                        <CertificatePaper certificate={activeCert} qrDataUrl={qrDataUrl} />
                     </div>
                 </div>
             )}

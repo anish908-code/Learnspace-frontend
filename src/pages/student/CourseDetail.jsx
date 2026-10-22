@@ -2,10 +2,17 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { Lock } from "lucide-react";
+
 import { fetchCourseDetail, clearCurrentCourse, clearCourseError } from "../../features/student/courseSlice";
 import { fetchEnrollments, startCourse, clearEnrollmentError } from "../../features/student/enrollmentSlice";
 import { fetchCourseLessons, clearLessonError } from "../../features/student/lessonSlice";
 import { SkeletonLine } from "../../components/common/Skeleton";
+import { PageHeader, AlertBanner } from "../../components/common";
+import Button, { ButtonLink } from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import { ProgressBar } from "../../components/ui/Progress";
+import { SectionMarker, CornerBrackets } from "../../components/ui/Deco";
 
 const CourseDetail = () => {
     const dispatch = useDispatch();
@@ -42,7 +49,7 @@ const CourseDetail = () => {
         );
     }
 
-    if (error) return <div className="rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{error}</div>;
+    if (error) return <AlertBanner type="error" message={error} />;
     if (!course) return null;
 
     const quiz = course.quizzes?.[0];
@@ -52,104 +59,170 @@ const CourseDetail = () => {
 
     return (
         <div>
-            <button type="button" onClick={() => navigate("/student/courses")} className="mb-4 text-sm font-medium transition hover:underline" style={{ color: "var(--muted-foreground)" }}>
+            <Button
+                type="button"
+                onClick={() => navigate("/student/courses")}
+                variant="link"
+                className="mb-5"
+            >
                 &larr; Back to Courses
-            </button>
+            </Button>
 
-            <div className="card p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                        <span className="section-label text-[10px]">{course.category || "General"}</span>
-                        <h1 className="mt-3 text-xl sm:text-2xl" style={{ fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 600, color: "var(--foreground)" }}>
-                            {course.title}
-                        </h1>
-                        <p className="mt-2 max-w-2xl text-sm" style={{ color: "var(--muted-foreground)" }}>
-                            {course.description || "No description."}
-                        </p>
-                        <div className="mt-4 flex flex-wrap gap-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                            <span>Difficulty: {course.difficulty || "-"}</span>
-                            <span>Duration: {course.duration || "-"}</span>
-                            <span>Lessons: {totalLessons}</span>
-                        </div>
+            <PageHeader
+                eyebrow={course.category || "General"}
+                title={course.title}
+                subtitle={course.description || "No description."}
+                action={
+                    !enrollment ? (
+                        <Button
+                            type="button"
+                            onClick={() => dispatch(startCourse(course.id))}
+                            loading={enrolling}
+                            size="lg"
+                        >
+                            Enroll Now
+                        </Button>
+                    ) : (
+                        <Badge tone="accent" dot className="px-4 py-2 sm:w-48 sm:justify-center">
+                            Enrolled
+                        </Badge>
+                    )
+                }
+            />
+
+            {/* Course meta readout */}
+            <dl className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+                {[
+                    { k: "Difficulty", v: course.difficulty || "-" },
+                    { k: "Duration", v: course.duration || "-" },
+                    { k: "Lessons", v: totalLessons },
+                ].map((cell) => (
+                    <div key={cell.k} className="bg-surface/80 px-4 py-4">
+                        <dt className="technical-label">{cell.k}</dt>
+                        <dd className="mt-1.5 font-display text-sm font-bold text-fg">
+                            {cell.v}
+                        </dd>
                     </div>
-                    <div className="w-full shrink-0 sm:w-48">
-                        {!enrollment ? (
-                            <button type="button" disabled={enrolling} onClick={() => dispatch(startCourse(course.id))} className="btn-primary w-full">
-                                {enrolling ? "Enrolling..." : "Enroll Now"}
-                            </button>
-                        ) : (
-                            <div className="rounded-md px-4 py-2 text-center text-sm font-medium" style={{ background: "var(--accent-muted)", color: "var(--accent)" }}>
-                                Enrolled
-                            </div>
-                        )}
-                    </div>
-                </div>
+                ))}
+            </dl>
 
-                {enrollment && (
-                    <div className="mt-6 border-t pt-5" style={{ borderColor: "var(--border)" }}>
-                        <div className="mb-2 flex justify-between text-sm">
-                            <span style={{ color: "var(--muted-foreground)" }}>Your progress</span>
-                            <span className="font-medium">{Number(enrollment.progress || 0)}%{enrollment.completed && " - Completed"}</span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-full" style={{ background: "var(--muted)" }}>
-                            <div className="h-full rounded-full transition-all" style={{ background: "var(--accent)", width: `${Number(enrollment.progress || 0)}%` }} />
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {enrollmentError && <div className="mt-5 rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{enrollmentError}</div>}
-
-            <div className="mt-8 card p-6">
-                <h2 style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--accent)" }}>Lessons</h2>
-                {!enrollment ? (
-                    <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>Enroll in this course first to access the lessons.</p>
-                ) : course.lessons?.length === 0 ? (
-                    <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>No lessons published yet.</p>
-                ) : (
-                    <ul className="mt-4 divide-y" style={{ borderColor: "var(--border)" }}>
-                        {(course.lessons || []).map((lesson, index) => (
-                            <li key={lesson.id}>
-                                <Link to={`/student/courses/${course.id}/lessons/${lesson.id}`} className="flex items-center justify-between gap-2 px-1 py-3 transition hover:bg-muted rounded-md" style={{ color: "var(--foreground)" }}>
-                                    <span className="min-w-0 truncate text-sm font-medium">{index + 1}. {lesson.title}</span>
-                                    <span className="shrink-0 text-sm" style={{ color: "var(--muted-foreground)" }}>Open &rarr;</span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-
-            {quiz && (
-                <div className="mt-6 card p-6">
-                    <h2 style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--accent)" }}>Final Quiz</h2>
-                    <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h3 className="text-lg font-semibold" style={{ fontFamily: '"Playfair Display", Georgia, serif', color: "var(--foreground)" }}>{quiz.title}</h3>
-                            <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                                Passing percentage: {Number(quiz.passing_percentage)}%{!allLessonsDone && " (complete all lessons first)"}
-                                {enrollment?.final_quiz_passed && (
-                                    <span className="ml-2 font-medium" style={{ color: "var(--success)" }}>• Already Passed</span>
-                                )}
-                            </p>
-                        </div>
-                        {enrollment?.final_quiz_passed ? (
-                            <span className="rounded-md px-4 py-2 text-sm font-medium" style={{ background: "var(--success-bg)", color: "var(--success)" }}>Passed</span>
-                        ) : allLessonsDone ? (
-                            <Link to={`/student/quizzes/${quiz.id}`} className="btn-primary">Start Quiz</Link>
-                        ) : (
-                            <span className="rounded-md px-4 py-2 text-sm" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>Locked</span>
-                        )}
-                    </div>
+            {enrollmentError && (
+                <div className="mt-5">
+                    <AlertBanner type="error" message={enrollmentError} />
                 </div>
             )}
 
-            <div className="mt-6 card p-6">
-                <h2 style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--accent)" }}>Projects</h2>
-                <p className="mt-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                    {projectCount > 0 ? `${projectCount} project(s) available. Projects unlock when you complete the course and pass the quiz.` : "No projects for this course."}
-                </p>
-            </div>
+            {enrollment && (
+                <div className="card mt-5 p-5 sm:p-6">
+                    <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+                        <span className="technical-label">Your progress</span>
+                        <span className="numeric text-sm font-semibold text-fg">
+                            {Number(enrollment.progress || 0)}%
+                            {enrollment.completed && " - Completed"}
+                        </span>
+                    </div>
+
+                    <ProgressBar value={Number(enrollment.progress || 0)} />
+                </div>
+            )}
+
+            {/* Lessons */}
+            <section className="mt-12">
+                <SectionMarker index={1}>Lessons</SectionMarker>
+
+                <div className="card mt-5 p-6 sm:p-7">
+                    {!enrollment ? (
+                        <p className="text-sm text-muted">
+                            Enroll in this course first to access the lessons.
+                        </p>
+                    ) : course.lessons?.length === 0 ? (
+                        <p className="text-sm text-muted">No lessons published yet.</p>
+                    ) : (
+                        <ul className="space-y-2.5">
+                            {(course.lessons || []).map((lesson, index) => (
+                                <li key={lesson.id}>
+                                    <Link
+                                        to={`/student/courses/${course.id}/lessons/${lesson.id}`}
+                                        className="data-row justify-between gap-3"
+                                    >
+                                        <span className="flex min-w-0 items-center gap-3">
+                                            <span className="numeric flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-xs font-semibold text-subtle">
+                                                {index + 1}
+                                            </span>
+                                            <span className="min-w-0 truncate text-sm font-medium text-fg">
+                                                {lesson.title}
+                                            </span>
+                                        </span>
+
+                                        <span className="technical-label shrink-0 text-accent">
+                                            Open &rarr;
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </section>
+
+            {/* Final Quiz */}
+            {quiz && (
+                <section className="mt-12">
+                    <SectionMarker index={2}>Final Quiz</SectionMarker>
+
+                    <div className="card relative mt-5 overflow-hidden p-6 sm:p-7">
+                        <CornerBrackets />
+
+                        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                                <h3 className="font-display text-lg font-bold text-fg">
+                                    {quiz.title}
+                                </h3>
+
+                                <p className="mt-2 text-sm text-muted">
+                                    Passing percentage: {Number(quiz.passing_percentage)}%
+                                    {!allLessonsDone && " (complete all lessons first)"}
+                                    {enrollment?.final_quiz_passed && (
+                                        <span className="ml-2 font-semibold text-teal">
+                                            &bull; Already Passed
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
+
+                            <div className="shrink-0">
+                                {enrollment?.final_quiz_passed ? (
+                                    <Badge tone="teal" dot className="px-4 py-2">
+                                        Passed
+                                    </Badge>
+                                ) : allLessonsDone ? (
+                                    <ButtonLink to={`/student/quizzes/${quiz.id}`} size="lg">
+                                        Start Quiz
+                                    </ButtonLink>
+                                ) : (
+                                    <Badge className="gap-1.5 px-4 py-2">
+                                        <Lock size={12} aria-hidden="true" />
+                                        Locked
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Projects */}
+            <section className="mt-12">
+                <SectionMarker index={3}>Projects</SectionMarker>
+
+                <div className="card mt-5 p-6 sm:p-7">
+                    <p className="text-sm text-muted">
+                        {projectCount > 0
+                            ? `${projectCount} project(s) available. Projects unlock when you complete the course and pass the quiz.`
+                            : "No projects for this course."}
+                    </p>
+                </div>
+            </section>
         </div>
     );
 };

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
@@ -10,37 +11,69 @@ import StudentRoute from "../routes/StudentRoute";
 import AdminRoute from "../routes/AdminRoute";
 import AuthGate from "../routes/AuthGate";
 
-import Landing from "../pages/Landing";
-import Login from "../pages/auth/Login";
-import Register from "../pages/auth/Register";
-import ForgotPassword from "../pages/auth/ForgotPassword";
-import ResetPassword from "../pages/auth/ResetPassword";
+/*
+|--------------------------------------------------------------------------
+| Code splitting
+|--------------------------------------------------------------------------
+| Pehle saare 25 pages ek hi chunk me the — initial bundle 2.2 MB tha.
+| Ab har page apne chunk me lazy load hota hai, sirf jo route pe visit
+| hoga wahi download hoga. Landing + auth pages pehle load hote hain,
+| baaki on-demand.
+*/
 
-import StudentDashboard from "../pages/student/StudentDashboard";
-import Courses from "../pages/student/Courses";
-import CourseDetail from "../pages/student/CourseDetail";
-import LessonView from "../pages/student/LessonView";
-import QuizPage from "../pages/student/QuizPage";
-import Projects from "../pages/student/Projects";
-import ProjectDetail from "../pages/student/ProjectDetail";
-import Submissions from "../pages/student/Submissions";
-import Notifications from "../pages/student/Notifications";
-import Profile from "../pages/student/Profile";
-import StudentCertificates from "../pages/student/Certificates";
-import StudentCertificateView from "../pages/student/CertificateView";
+const Landing = lazy(() => import("../pages/Landing"));
+const NotFound = lazy(() => import("../pages/NotFound"));
 
-import AdminDashboard from "../pages/admin/AdminDashboard";
-import AdminStudents from "../pages/admin/Students";
-import AdminCourses from "../pages/admin/Courses";
-import AdminCourseLessons from "../pages/admin/CourseLessons";
-import AdminQuizzes from "../pages/admin/Quizzes";
-import AdminQuizQuestions from "../pages/admin/QuizQuestions";
-import AdminProjects from "../pages/admin/Projects";
-import AdminSubmissions from "../pages/admin/Submissions";
-import AdminCertificates from "../pages/admin/Certificates";
+const Login = lazy(() => import("../pages/auth/Login"));
+const Register = lazy(() => import("../pages/auth/Register"));
+const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/auth/ResetPassword"));
 
-import VerifyCertificate from "../pages/public/VerifyCertificate";
-import NotFound from "../pages/NotFound";
+const StudentDashboard = lazy(() => import("../pages/student/StudentDashboard"));
+const StudentCourses = lazy(() => import("../pages/student/Courses"));
+const StudentCourseDetail = lazy(() => import("../pages/student/CourseDetail"));
+const LessonView = lazy(() => import("../pages/student/LessonView"));
+const QuizPage = lazy(() => import("../pages/student/QuizPage"));
+const StudentProjects = lazy(() => import("../pages/student/Projects"));
+const ProjectDetail = lazy(() => import("../pages/student/ProjectDetail"));
+const StudentSubmissions = lazy(() => import("../pages/student/Submissions"));
+const StudentNotifications = lazy(() => import("../pages/student/Notifications"));
+const StudentProfile = lazy(() => import("../pages/student/Profile"));
+const StudentCertificates = lazy(() => import("../pages/student/Certificates"));
+const StudentCertificateView = lazy(() => import("../pages/student/CertificateView"));
+
+const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
+const AdminStudents = lazy(() => import("../pages/admin/Students"));
+const AdminCourses = lazy(() => import("../pages/admin/Courses"));
+const AdminCourseLessons = lazy(() => import("../pages/admin/CourseLessons"));
+const AdminQuizzes = lazy(() => import("../pages/admin/Quizzes"));
+const AdminQuizQuestions = lazy(() => import("../pages/admin/QuizQuestions"));
+const AdminProjects = lazy(() => import("../pages/admin/Projects"));
+const AdminSubmissions = lazy(() => import("../pages/admin/Submissions"));
+const AdminCertificates = lazy(() => import("../pages/admin/Certificates"));
+
+
+// Route switch hone pe dikhta hai — page content ki jagah
+const RouteFallback = () => (
+    <div
+        className="flex min-h-[60vh] items-center justify-center"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+    >
+        <div className="flex flex-col items-center gap-3">
+            <span
+                aria-hidden="true"
+                className="h-9 w-9 animate-spin rounded-full border-2 border-transparent border-t-accent border-r-accent"
+            />
+            <p className="technical-label">Loading view</p>
+        </div>
+    </div>
+);
+
+const withSuspense = (element) => (
+    <Suspense fallback={<RouteFallback />}>{element}</Suspense>
+);
 
 const router = createBrowserRouter([
     // Public routes
@@ -49,7 +82,7 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "/",
-                element: (
+                element: withSuspense(
                     <AuthGate>
                         <Landing />
                     </AuthGate>
@@ -59,13 +92,8 @@ const router = createBrowserRouter([
     },
 
     {
-        path: "/certificates/verify/:certificateCode",
-        element: <VerifyCertificate />,
-    },
-
-    {
         path: "/login",
-        element: (
+        element: withSuspense(
             <AuthGate>
                 <AuthLayout image="login">
                     <Login />
@@ -75,7 +103,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/register",
-        element: (
+        element: withSuspense(
             <AuthGate>
                 <AuthLayout image="register">
                     <Register />
@@ -85,7 +113,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/forgot-password",
-        element: (
+        element: withSuspense(
             <AuthGate>
                 <AuthLayout image="forgot">
                     <ForgotPassword />
@@ -95,7 +123,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/reset-password",
-        element: (
+        element: withSuspense(
             <AuthGate>
                 <AuthLayout image="reset">
                     <ResetPassword />
@@ -117,51 +145,51 @@ const router = createBrowserRouter([
                         children: [
                             {
                                 path: "/student",
-                                element: <StudentDashboard />,
+                                element: withSuspense(<StudentDashboard />),
                             },
                             {
                                 path: "/student/courses",
-                                element: <Courses />,
+                                element: withSuspense(<StudentCourses />),
                             },
                             {
                                 path: "/student/courses/:courseId",
-                                element: <CourseDetail />,
+                                element: withSuspense(<StudentCourseDetail />),
                             },
                             {
                                 path: "/student/courses/:courseId/lessons/:lessonId",
-                                element: <LessonView />,
+                                element: withSuspense(<LessonView />),
                             },
                             {
                                 path: "/student/quizzes/:quizId",
-                                element: <QuizPage />,
+                                element: withSuspense(<QuizPage />),
                             },
                             {
                                 path: "/student/projects",
-                                element: <Projects />,
+                                element: withSuspense(<StudentProjects />),
                             },
                             {
                                 path: "/student/projects/:projectId",
-                                element: <ProjectDetail />,
+                                element: withSuspense(<ProjectDetail />),
                             },
                             {
                                 path: "/student/submissions",
-                                element: <Submissions />,
+                                element: withSuspense(<StudentSubmissions />),
                             },
                             {
                                 path: "/student/certificates",
-                                element: <StudentCertificates />,
+                                element: withSuspense(<StudentCertificates />),
                             },
                             {
                                 path: "/student/certificates/:certificateId",
-                                element: <StudentCertificateView />,
+                                element: withSuspense(<StudentCertificateView />),
                             },
                             {
                                 path: "/student/notifications",
-                                element: <Notifications />,
+                                element: withSuspense(<StudentNotifications />),
                             },
                             {
                                 path: "/student/profile",
-                                element: <Profile />,
+                                element: withSuspense(<StudentProfile />),
                             },
                         ],
                     },
@@ -177,39 +205,39 @@ const router = createBrowserRouter([
                         children: [
                             {
                                 path: "/admin",
-                                element: <AdminDashboard />,
+                                element: withSuspense(<AdminDashboard />),
                             },
                             {
                                 path: "/admin/students",
-                                element: <AdminStudents />,
+                                element: withSuspense(<AdminStudents />),
                             },
                             {
                                 path: "/admin/courses",
-                                element: <AdminCourses />,
+                                element: withSuspense(<AdminCourses />),
                             },
                             {
                                 path: "/admin/courses/:courseId",
-                                element: <AdminCourseLessons />,
+                                element: withSuspense(<AdminCourseLessons />),
                             },
                             {
                                 path: "/admin/quizzes",
-                                element: <AdminQuizzes />,
+                                element: withSuspense(<AdminQuizzes />),
                             },
                             {
                                 path: "/admin/quizzes/:quizId",
-                                element: <AdminQuizQuestions />,
+                                element: withSuspense(<AdminQuizQuestions />),
                             },
                             {
                                 path: "/admin/projects",
-                                element: <AdminProjects />,
+                                element: withSuspense(<AdminProjects />),
                             },
                             {
                                 path: "/admin/submissions",
-                                element: <AdminSubmissions />,
+                                element: withSuspense(<AdminSubmissions />),
                             },
                             {
                                 path: "/admin/certificates",
-                                element: <AdminCertificates />,
+                                element: withSuspense(<AdminCertificates />),
                             },
                         ],
                     },
@@ -221,7 +249,7 @@ const router = createBrowserRouter([
     // Catch-all — 404 page
     {
         path: "*",
-        element: <NotFound />,
+        element: withSuspense(<NotFound />),
     },
 ]);
 

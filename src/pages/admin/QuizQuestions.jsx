@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { ArrowLeft, Trash2, Upload, FileSpreadsheet } from "lucide-react";
+import {
+    ArrowLeft,
+    Trash2,
+    Upload,
+    FileSpreadsheet,
+    ListChecks,
+} from "lucide-react";
 
 import {
     fetchAdminQuestions,
@@ -13,6 +19,9 @@ import {
 } from "../../features/admin/adminQuestionSlice";
 import { SkeletonList } from "../../components/common/Skeleton";
 import { parseCsv, mapRowToQuestion } from "../../utils/csv";
+import { PageHeader, EmptyState } from "../../components/common";
+import Button, { ButtonLink } from "../../components/ui/Button";
+import { SectionMarker } from "../../components/ui/Deco";
 
 const QuizQuestions = () => {
     const dispatch = useDispatch();
@@ -116,208 +125,216 @@ const QuizQuestions = () => {
 
     return (
         <div>
-            <Link
+            <ButtonLink
                 to="/admin/quizzes"
-                className="mb-4 inline-flex items-center gap-1.5 btn-ghost text-sm font-medium"
+                variant="ghost"
+                size="sm"
+                className="-ml-3 mb-4"
             >
                 <ArrowLeft size={16} />
                 Back to quizzes
-            </Link>
+            </ButtonLink>
 
-            <h1 className="page-title">Questions — {quiz?.title || "..."}</h1>
+            <PageHeader
+                eyebrow="assessment bank"
+                title={`Questions — ${quiz?.title || "..."}`}
+                subtitle={`Total questions: ${questions.length} · Pass ${quiz?.passing_percentage ?? "-"}%`}
+            />
 
-            <p className="-mt-1 mb-6 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                Total questions: {questions.length} · Pass{" "}
-                {quiz?.passing_percentage ?? "-"}%
-            </p>
-
-            <details className="card mb-6 p-5">
-                <summary className="cursor-pointer select-none text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-                    <span className="inline-flex items-center gap-2">
-                        <Upload size={15} />
+            <div className="space-y-4">
+                <details className="surface-technical rounded-2xl p-5 sm:p-6">
+                    <summary className="flex cursor-pointer select-none list-none items-center gap-2.5 font-display text-sm font-bold text-fg [&::-webkit-details-marker]:hidden">
+                        <span className="icon-well h-8 w-8 text-accent">
+                            <Upload size={15} />
+                        </span>
                         Bulk Import (JSON)
-                    </span>
-                </summary>
+                    </summary>
 
-                <p className="mt-3 text-xs" style={{ color: "var(--muted-foreground)" }}>
-                    Paste an array of questions in this format:{" "}
-                    <code className="rounded bg-muted px-1 py-0.5">
-                        {"[{ question, option_a, option_b, option_c, option_d, correct_answer: 'a'|'b'|'c'|'d', marks }]" }
-                    </code>
-                </p>
+                    <p className="mt-4 text-xs leading-relaxed text-muted">
+                        Paste an array of questions in this format:{" "}
+                        <code className="numeric rounded-md border border-line bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] text-fg">
+                            {"[{ question, option_a, option_b, option_c, option_d, correct_answer: 'a'|'b'|'c'|'d', marks }]" }
+                        </code>
+                    </p>
 
-                <textarea
-                    rows={6}
-                    value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
-                    className="input-field mt-3 font-mono text-xs"
-                    placeholder='[{"question":"2+2?","option_a":"3","option_b":"4","option_c":"5","option_d":"6","correct_answer":"b"}]'
-                />
-
-                <button
-                    type="button"
-                    onClick={handleBulkImport}
-                    disabled={saving || !bulkText.trim()}
-                    className="btn-primary mt-3 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {saving ? "Importing..." : "Import Questions"}
-                </button>
-            </details>
-
-            <details className="card mb-6 p-5">
-                <summary className="cursor-pointer select-none text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-                    <span className="inline-flex items-center gap-2">
-                        <FileSpreadsheet size={15} />
-                        Import from CSV / Excel
-                    </span>
-                </summary>
-
-                <p className="mt-3 text-xs" style={{ color: "var(--muted-foreground)" }}>
-                    Upload a <strong>.csv</strong> file exported from Excel / Google
-                    Sheets. Headers should be:
-                </p>
-
-                <code className="mt-1 block overflow-x-auto whitespace-nowrap rounded bg-muted px-2 py-1 text-[11px]" style={{ color: "var(--foreground)" }}>
-                    question, option_a, option_b, option_c, option_d, correct_answer, marks
-                </code>
-
-                <label
-                    htmlFor="csv-upload"
-                    className="mt-4 flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-warm-border bg-muted/50 px-6 py-8 transition hover:border-accent hover:bg-accent-muted/30"
-                >
-                    <FileSpreadsheet size={28} style={{ color: "var(--muted-foreground)" }} />
-
-                    <div className="text-center">
-                        <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
-                            {csvFileName || "Click to choose a CSV file"}
-                        </p>
-                        <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
-                            .csv files only
-                        </p>
-                    </div>
-
-                    <input
-                        id="csv-upload"
-                        type="file"
-                        accept=".csv,text/csv"
-                        onChange={handleCsvFile}
-                        className="hidden"
+                    <textarea
+                        rows={6}
+                        value={bulkText}
+                        onChange={(e) => setBulkText(e.target.value)}
+                        className="input-field mt-3 font-mono text-xs"
+                        placeholder='[{"question":"2+2?","option_a":"3","option_b":"4","option_c":"5","option_d":"6","correct_answer":"b"}]'
                     />
-                </label>
 
-                {csvPreview && (
-                    <div className="mt-4 rounded-xl border border-warm-border bg-muted p-4">
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
-                                Preview — {csvPreview.length} question(s) found in{" "}
-                                <span style={{ color: "var(--foreground)" }}>{csvFileName}</span>
+                    <Button
+                        type="button"
+                        onClick={handleBulkImport}
+                        disabled={saving || !bulkText.trim()}
+                        loading={saving}
+                        loadingText="Importing…"
+                        className="mt-3"
+                    >
+                        Import Questions
+                    </Button>
+                </details>
+
+                <details className="surface-technical rounded-2xl p-5 sm:p-6">
+                    <summary className="flex cursor-pointer select-none list-none items-center gap-2.5 font-display text-sm font-bold text-fg [&::-webkit-details-marker]:hidden">
+                        <span className="icon-well h-8 w-8 text-accent">
+                            <FileSpreadsheet size={15} />
+                        </span>
+                        Import from CSV / Excel
+                    </summary>
+
+                    <p className="mt-4 text-xs leading-relaxed text-muted">
+                        Upload a <strong className="font-semibold text-fg">.csv</strong>{" "}
+                        file exported from Excel / Google Sheets. Headers
+                        should be:
+                    </p>
+
+                    <code className="numeric mt-2 block overflow-x-auto whitespace-nowrap rounded-lg border border-line bg-surface px-3 py-2 text-[0.6875rem] text-fg">
+                        question, option_a, option_b, option_c, option_d, correct_answer, marks
+                    </code>
+
+                    <label
+                        htmlFor="csv-upload"
+                        className="mt-5 flex cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-surface/40 px-6 py-9 text-center transition-colors duration-200 hover:border-accent/60 hover:bg-accent/5"
+                    >
+                        <span className="icon-well icon-well-round h-12 w-12 text-accent">
+                            <FileSpreadsheet size={22} strokeWidth={1.9} />
+                        </span>
+
+                        <div>
+                            <p className="text-sm font-semibold text-fg">
+                                {csvFileName || "Click to choose a CSV file"}
+                            </p>
+                            <p className="mt-1 text-xs text-muted">
+                                .csv files only
                             </p>
                         </div>
 
-                        <div className="mt-3 max-h-48 space-y-2 overflow-y-auto">
-                            {csvPreview.map((q, idx) => (
-                                <div
-                                    key={idx}
-                                    className="rounded-lg border border-warm-border bg-white px-3 py-2 text-xs"
+                        <input
+                            id="csv-upload"
+                            type="file"
+                            accept=".csv,text/csv"
+                            onChange={handleCsvFile}
+                            className="hidden"
+                        />
+                    </label>
+
+                    {csvPreview && (
+                        <div className="surface-a mt-5 rounded-2xl p-4 sm:p-5">
+                            <p className="text-sm font-semibold text-fg">
+                                Preview — {csvPreview.length} question(s) found in{" "}
+                                <span className="numeric">{csvFileName}</span>
+                            </p>
+
+                            <div className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
+                                {csvPreview.map((q, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="rounded-xl border border-line bg-surface px-3 py-2.5 text-xs"
+                                    >
+                                        <p className="font-semibold text-fg">
+                                            {idx + 1}. {q.question}
+                                        </p>
+                                        <p className="mt-1 text-muted">
+                                            A. {q.option_a} · B. {q.option_b} · C.{" "}
+                                            {q.option_c} · D. {q.option_d}
+                                        </p>
+                                        <p className="numeric mt-0.5 text-teal">
+                                            Answer: {q.correct_answer.toUpperCase()} · Marks:{" "}
+                                            {q.marks}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                                <Button
+                                    type="button"
+                                    onClick={handleCsvConfirm}
+                                    disabled={saving}
+                                    loading={saving}
+                                    loadingText="Importing…"
                                 >
-                                    <p className="font-medium" style={{ color: "var(--foreground)" }}>
-                                        {idx + 1}. {q.question}
-                                    </p>
-                                    <p className="mt-1" style={{ color: "var(--muted-foreground)" }}>
-                                        A. {q.option_a} · B. {q.option_b} · C.{" "}
-                                        {q.option_c} · D. {q.option_d}
-                                    </p>
-                                    <p className="text-emerald-600">
-                                        Answer: {q.correct_answer.toUpperCase()} · Marks:{" "}
-                                        {q.marks}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
+                                    {`Confirm Import (${csvPreview.length} questions)`}
+                                </Button>
 
-                        <div className="mt-4 flex flex-wrap items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={handleCsvConfirm}
-                                disabled={saving}
-                                className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {saving
-                                    ? "Importing..."
-                                    : `Confirm Import (${csvPreview.length} questions)`}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setCsvPreview(null);
-                                    setCsvFileName("");
-                                }}
-                                className="btn-secondary"
-                            >
-                                Cancel
-                            </button>
+                                <Button
+                                    variant="secondary"
+                                    type="button"
+                                    onClick={() => {
+                                        setCsvPreview(null);
+                                        setCsvFileName("");
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </details>
+                    )}
+                </details>
+            </div>
+
+            <div className="mb-5 mt-8">
+                <SectionMarker index={1}>Question bank</SectionMarker>
+            </div>
 
             {loading && questions.length === 0 ? (
                 <SkeletonList count={3} />
             ) : questions.length === 0 ? (
-                <div className="card px-6 py-12 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-                    This quiz has no questions yet.
-                </div>
+                <EmptyState
+                    icon={ListChecks}
+                    title="This quiz has no questions yet."
+                />
             ) : (
-                <div className="space-y-4">
+                <div className="stagger space-y-3">
                     {questions.map((question, index) => (
-                        <div key={question.id} className="card p-5">
-                            <div className="flex items-start gap-4">
-                                <span
-                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-sm font-bold"
-                                    style={{ color: "var(--accent)" }}
+                        <div
+                            key={question.id}
+                            className="data-row flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:gap-4"
+                        >
+                            <span className="icon-well numeric h-9 w-9 shrink-0 text-sm font-bold text-accent">
+                                {index + 1}
+                            </span>
+
+                            <div className="min-w-0 flex-1">
+                                <p className="font-semibold text-fg">
+                                    {question.question}
+                                </p>
+
+                                <div className="mt-2.5 grid gap-1.5 text-sm sm:grid-cols-2">
+                                    {["a", "b", "c", "d"].map((key) => (
+                                        <p
+                                            key={key}
+                                            className={
+                                                question.correct_answer === key
+                                                    ? "font-semibold text-teal"
+                                                    : "text-muted"
+                                            }
+                                        >
+                                            {key.toUpperCase()}. {question[`option_${key}`]}
+                                            {question.correct_answer === key && " ✓"}
+                                        </p>
+                                    ))}
+                                </div>
+
+                                <p className="numeric mt-2.5 text-[0.6875rem] text-subtle">
+                                    Marks: {question.marks}
+                                </p>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-2">
+                                <Button
+                                    variant="destructive"
+                                    size="icon-sm"
+                                    type="button"
+                                    onClick={() => handleDelete(question)}
+                                    title="Delete"
+                                    aria-label="Delete"
                                 >
-                                    {index + 1}
-                                </span>
-
-                                <div className="min-w-0 flex-1">
-                                    <p className="font-medium" style={{ color: "var(--foreground)" }}>
-                                        {question.question}
-                                    </p>
-
-                                    <div className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-                                        {["a", "b", "c", "d"].map((key) => (
-                                            <p
-                                                key={key}
-                                                className={
-                                                    question.correct_answer === key
-                                                        ? "font-semibold text-emerald-700"
-                                                        : ""
-                                                }
-                                                style={question.correct_answer !== key ? { color: "var(--muted-foreground)" } : undefined}
-                                            >
-                                                {key.toUpperCase()}. {question[`option_${key}`]}
-                                                {question.correct_answer === key && " ✓"}
-                                            </p>
-                                        ))}
-                                    </div>
-
-                                    <p className="mt-2 text-xs" style={{ color: "var(--muted-foreground)" }}>
-                                        Marks: {question.marks}
-                                    </p>
-                                </div>
-
-                                <div className="flex shrink-0 items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDelete(question)}
-                                        title="Delete"
-                                        className="rounded-lg p-2.5 transition hover:bg-red-50 hover:text-red-600"
-                                        style={{ color: "var(--muted-foreground)" }}
-                                    >
-                                        <Trash2 size={17} />
-                                    </button>
-                                </div>
+                                    <Trash2 size={17} />
+                                </Button>
                             </div>
                         </div>
                     ))}

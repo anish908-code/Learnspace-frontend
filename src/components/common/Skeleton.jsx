@@ -1,4 +1,12 @@
-import { GraduationCap } from "lucide-react";
+import { BrandGlyph } from "../ui/BrandMark";
+
+/*
+|--------------------------------------------------------------------------
+| Skeletons
+|--------------------------------------------------------------------------
+| Loading states bhi design system ki language me — shimmer sweep + tinted
+| surfaces, na ki grey blocks.
+*/
 
 export const Skeleton = ({ className = "", children }) => (
     <div className={`skeleton ${className}`} aria-hidden="true">
@@ -23,7 +31,7 @@ const SkeletonGridCard = () => (
             <SkeletonLine className="w-full" />
             <SkeletonLine className="w-2/3" />
         </div>
-        <Skeleton className="mt-6 h-9 w-full rounded-md" />
+        <Skeleton className="mt-6 h-10 w-full rounded-xl" />
     </div>
 );
 
@@ -31,15 +39,15 @@ export const SkeletonCardGrid = ({
     count = 6,
     className = "md:grid-cols-2 lg:grid-cols-3",
 }) => (
-    <div className={`grid gap-8 ${className}`}>
+    <div className={`grid gap-5 ${className}`}>
         {Array.from({ length: count }, (_, index) => (
             <SkeletonGridCard key={index} />
         ))}
     </div>
 );
 
-export const SkeletonListItem = ({ className = "" }) => (
-    <div className={`card flex items-center justify-between gap-4 p-6 ${className}`}>
+const SkeletonListItem = ({ className = "" }) => (
+    <div className={`data-row flex-col items-start sm:flex-row sm:items-center ${className}`}>
         <div className="min-w-0 flex-1">
             <SkeletonLine className="h-4 w-1/3" />
             <SkeletonLine className="mt-2.5 h-3 w-1/2" />
@@ -49,7 +57,7 @@ export const SkeletonListItem = ({ className = "" }) => (
 );
 
 export const SkeletonList = ({ count = 4 }) => (
-    <div className="space-y-4">
+    <div className="space-y-3">
         {Array.from({ length: count }, (_, index) => (
             <SkeletonListItem key={index} />
         ))}
@@ -60,10 +68,10 @@ export const SkeletonStatCards = ({
     count = 4,
     className = "sm:grid-cols-2 lg:grid-cols-4",
 }) => (
-    <div className={`grid gap-8 ${className}`}>
+    <div className={`grid gap-4 ${className}`}>
         {Array.from({ length: count }, (_, index) => (
             <div key={index} className="card flex items-center gap-4 p-5">
-                <Skeleton className="h-12 w-12 shrink-0 rounded-lg" />
+                <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
                 <div className="min-w-0">
                     <SkeletonLine className="h-3 w-24" />
                     <SkeletonLine className="mt-2 h-6 w-12" />
@@ -75,10 +83,10 @@ export const SkeletonStatCards = ({
 
 export const SkeletonTableRows = ({ count = 5 }) => (
     <div className="card overflow-hidden">
-        <div className="divide-y divide-warm-border">
+        <div className="divide-y divide-line">
             {Array.from({ length: count }, (_, index) => (
-                <div key={index} className="flex items-center gap-3 px-6 py-4">
-                    <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+                <div key={index} className="flex items-center gap-3 px-5 py-4">
+                    <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
                     <div className="min-w-0 flex-1">
                         <SkeletonLine className="h-3.5 w-36" />
                         <SkeletonLine className="mt-2 h-3 w-48" />
@@ -91,12 +99,24 @@ export const SkeletonTableRows = ({ count = 5 }) => (
     </div>
 );
 
-export const FullScreenLoader = () => (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-5" style={{ background: "var(--background)" }}>
-        <Skeleton className="flex h-14 w-14 items-center justify-center rounded-xl">
-            <GraduationCap size={26} className="text-warm-gray" />
-        </Skeleton>
-        <SkeletonLine className="w-40" />
-        <span className="sr-only">Loading...</span>
+export const FullScreenLoader = ({ message = "Loading" }) => (
+    <div className="relative flex min-h-screen flex-col items-center justify-center gap-5">
+        <div className="relative">
+            <span
+                aria-hidden="true"
+                className="absolute inset-0 animate-pulse-ring rounded-2xl bg-accent/25"
+            />
+            <BrandGlyph size="lg" className="relative" />
+        </div>
+
+        <div className="flex items-center gap-2">
+            <span className="technical-label">{message}</span>
+            <span
+                aria-hidden="true"
+                className="h-3 w-[2px] animate-caret-blink bg-accent"
+            />
+        </div>
+
+        <span className="sr-only">Loading…</span>
     </div>
 );

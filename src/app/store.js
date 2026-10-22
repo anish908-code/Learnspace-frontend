@@ -13,6 +13,7 @@ import notificationReducer from "../features/student/notificationSlice";
 import profileReducer from "../features/student/profileSlice";
 
 import adminOverviewReducer from "../features/admin/adminOverviewSlice";
+import adminAnalyticsReducer from "../features/admin/adminAnalyticsSlice";
 import adminStudentReducer from "../features/admin/adminStudentSlice";
 import adminCourseReducer from "../features/admin/adminCourseSlice";
 import adminLessonReducer from "../features/admin/adminLessonSlice";
@@ -38,6 +39,7 @@ export const store = configureStore({
     studentProfile: profileReducer,
 
     adminOverview: adminOverviewReducer,
+    adminAnalytics: adminAnalyticsReducer,
     adminStudents: adminStudentReducer,
     adminCourses: adminCourseReducer,
     adminLessons: adminLessonReducer,

@@ -14,10 +14,14 @@ export const COLORS = {
     line: "#C9B27C",
 };
 
+// Certificate ke liye typography — certificate print hota hai, isliye
+// fonts seedhe HTML se load hoti hain (index.html) aur container query units
+// ke saath scale hoti hain. Display voice ab Fraunces (serif) hai —
+// certificate par editorial serif premium feel deta hai.
 export const FONTS = {
-    serif: '"Playfair Display", Georgia, serif',
-    sans: '"Source Sans 3", system-ui, sans-serif',
-    mono: '"IBM Plex Mono", monospace',
+    display: '"Fraunces", "Inter", system-ui, sans-serif',
+    sans: 'Inter, system-ui, -apple-system, sans-serif',
+    mono: '"JetBrains Mono", ui-monospace, monospace',
 };
 
 // Aspect ratio (16:9 landscape)

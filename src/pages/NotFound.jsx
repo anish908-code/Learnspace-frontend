@@ -1,102 +1,67 @@
-import { useNavigate, Link } from "react-router-dom";
-import { BookOpen, Home, ArrowLeft, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Compass } from "lucide-react";
 
-const NotFound = () => {
-    const navigate = useNavigate();
+import { ButtonLink } from "../components/ui/Button";
+import { GeoMark, SectionMarker } from "../components/ui/Deco";
 
-    return (
-        <div
-            className="flex min-h-screen flex-col items-center justify-center px-4"
-            style={{ background: "var(--background)" }}
-        >
-            <div className="w-full max-w-lg text-center">
-                {/* Decorative top accent */}
-                <span className="section-label mb-6 inline-block">
-                    Page Not Found
-                </span>
+/*
+|--------------------------------------------------------------------------
+| NotFound
+|--------------------------------------------------------------------------
+| "Instrument ne kuch nahi mila" — 404 ko bhi design system ka hissa banaya
+| gaya hai: architecture panel + technical readout, zero custom colors.
+*/
 
-                {/* Large 404 number */}
-                <div className="relative mb-8">
-                    <h1
-                        className="select-none text-[9rem] font-bold leading-none tracking-tighter opacity-[0.07]"
-                        style={{
-                            fontFamily: '"Playfair Display", Georgia, serif',
-                            color: "var(--foreground)",
-                        }}
-                    >
-                        404
-                    </h1>
-                    {/* Floating icon overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div
-                            className="flex h-24 w-24 items-center justify-center rounded-full"
-                            style={{
-                                background: "var(--accent-muted, #F5ECD7)",
-                                boxShadow: "0 8px 30px rgba(184,134,11,0.12)",
-                            }}
-                        >
-                            <Search
-                                size={40}
-                                strokeWidth={1.5}
-                                style={{ color: "var(--accent)" }}
-                            />
-                        </div>
-                    </div>
-                </div>
+const NotFound = () => (
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-5 py-16">
+        <div aria-hidden="true" className="hero-ambient absolute inset-0" />
+        <div aria-hidden="true" className="grid-fine absolute inset-0 opacity-50 [mask-image:radial-gradient(60%_50%_at_50%_50%,#000,transparent)]" />
+        <GeoMark shape="diamond" tone="gold" className="left-[18%] top-[24%] h-2.5 w-2.5" />
+        <GeoMark shape="square" tone="accent" className="right-[20%] top-[32%] h-2 w-2" />
 
-                {/* Message */}
-                <h2
-                    className="mb-3 text-3xl font-semibold tracking-tight"
-                    style={{
-                        fontFamily: '"Playfair Display", Georgia, serif',
-                        color: "var(--foreground)",
-                    }}
+        <div className="relative w-full max-w-lg text-center">
+            <div className="flex justify-center">
+                <SectionMarker index={4} align="center">
+                    signal lost
+                </SectionMarker>
+            </div>
+
+            <p className="numeric mt-8 bg-gradient-to-b from-fg to-transparent bg-clip-text text-[7rem] font-extrabold leading-none text-transparent sm:text-[9rem]">
+                404
+            </p>
+
+            <span className="icon-well icon-well-round mx-auto -mt-8 h-20 w-20">
+                <Compass size={30} strokeWidth={1.4} />
+            </span>
+
+            <h1 className="mt-8 font-display text-2xl font-bold tracking-[-0.022em] text-fg sm:text-3xl">
+                This page is off the map
+            </h1>
+
+            <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted">
+                The address does not resolve to anything in the catalog. Head back, or start from the
+                homepage and pick a direction.
+            </p>
+
+            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <ButtonLink to="/" size="lg" fullWidth className="sm:w-auto">
+                    <ArrowLeft size={16} />
+                    Back to homepage
+                </ButtonLink>
+            </div>
+
+            <div className="mt-12 flex items-center justify-center gap-3">
+                <span aria-hidden="true" className="h-px w-10 bg-gradient-to-r from-transparent to-line-strong" />
+                <Link
+                    to="/login"
+                    className="technical-label transition-colors hover:text-accent"
                 >
-                    Lost in the stacks?
-                </h2>
-                <p
-                    className="mx-auto mb-10 max-w-md text-base leading-relaxed"
-                    style={{ color: "var(--muted-foreground)" }}
-                >
-                    The page you are looking for does not exist or has been moved.
-                    Let's get you back on track.
-                </p>
-
-                {/* Action buttons */}
-                <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                    <button
-                        type="button"
-                        onClick={() => navigate(-1)}
-                        className="btn-secondary w-full sm:w-auto"
-                    >
-                        <ArrowLeft size={16} />
-                        Go Back
-                    </button>
-                    <Link to="/" className="btn-primary w-full sm:w-auto">
-                        <Home size={16} />
-                        Back to Home
-                    </Link>
-                </div>
-
-                {/* Decorative divider */}
-                <div className="rule-line mx-auto mt-12 max-w-xs" />
-
-                {/* Footer hint */}
-                <div className="mt-8 flex items-center justify-center gap-2">
-                    <BookOpen size={14} style={{ color: "var(--border)" }} />
-                    <p
-                        className="text-xs"
-                        style={{
-                            color: "var(--muted-foreground)",
-                            fontFamily: '"IBM Plex Mono", monospace',
-                        }}
-                    >
-                        LearnSpace &mdash; Keep exploring
-                    </p>
-                </div>
+                    or sign in to continue
+                </Link>
+                <span aria-hidden="true" className="h-px w-10 bg-gradient-to-l from-transparent to-line-strong" />
             </div>
         </div>
-    );
-};
+    </div>
+);
 
 export default NotFound;

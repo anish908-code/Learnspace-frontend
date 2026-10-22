@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import { Plus, Pencil, Trash2, ListVideo, Video, X, ChevronDown, ChevronUp } from "lucide-react";
+import {
+    Plus,
+    Pencil,
+    Trash2,
+    ListVideo,
+    Video,
+    X,
+    ChevronDown,
+    ChevronUp,
+    ArrowRight,
+    BookOpen,
+} from "lucide-react";
 
 import {
     fetchAdminCourses,
@@ -14,6 +24,10 @@ import {
 } from "../../features/admin/adminCourseSlice";
 import { createLesson, getCourseLessons } from "../../api/adminApi";
 import { SkeletonList } from "../../components/common/Skeleton";
+import { PageHeader, EmptyState } from "../../components/common";
+import Button, { ButtonLink } from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import { Field, Input, Textarea, Select } from "../../components/ui/Field";
 
 const isValidYouTubeUrl = (url) => {
     if (!url) return true;
@@ -41,7 +55,6 @@ const emptyCourseForm = {
 const emptyLessonForm = {
     title: "",
     video_url: "",
-    notes: "",
     lesson_order: "1",
     status: "published",
 };
@@ -49,90 +62,89 @@ const emptyLessonForm = {
 const CourseForm = ({ initialData, onCancel, onSubmit, saving }) => {
     return (
     <form
-        className="card space-y-4 border-t-2 border-t-[var(--accent)] p-6"
+        className="card-accent-top space-y-5 p-6 sm:p-7"
         onSubmit={(event) => {
             event.preventDefault();
             onSubmit();
         }}
     >
-        <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-                <label className="label-text">Title *</label>
-                <input
+        <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Title" required className="sm:col-span-2">
+                <Input
                     type="text"
                     required
                     value={initialData.title}
                     onChange={(e) => initialData.setTitle(e.target.value)}
-                    className="input-field"
                     placeholder="Course ka naam"
                 />
-            </div>
+            </Field>
 
-            <div className="sm:col-span-2">
-                <label className="label-text">Description *</label>
-                <textarea
+            <Field label="Description" required className="sm:col-span-2">
+                <Textarea
                     required
                     rows={3}
                     value={initialData.description}
                     onChange={(e) => initialData.setDescription(e.target.value)}
-                    className="input-field"
                     placeholder="What is this course about"
                 />
-            </div>
+            </Field>
 
-            <div>
-                <label className="label-text">Category *</label>
-                <input
+            <Field label="Category" required>
+                <Input
                     type="text"
                     required
                     value={initialData.category}
                     onChange={(e) => initialData.setCategory(e.target.value)}
-                    className="input-field"
                     placeholder="Web Development"
                 />
-            </div>
+            </Field>
 
-            <div>
-                <label className="label-text">Difficulty</label>
-                <select
+            <Field label="Difficulty">
+                <Select
                     value={initialData.difficulty}
                     onChange={(e) => initialData.setDifficulty(e.target.value)}
-                    className="input-field"
                 >
                     <option>Beginner</option>
                     <option>Intermediate</option>
                     <option>Advanced</option>
-                </select>
-            </div>
+                </Select>
+            </Field>
 
-            <div>
-                <label className="label-text">Status</label>
-                <select
+            <Field label="Status">
+                <Select
                     value={initialData.status}
                     onChange={(e) => initialData.setStatus(e.target.value)}
-                    className="input-field"
                 >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
-                </select>
-            </div>
-
+                </Select>
+            </Field>
         </div>
 
-        <div className="flex gap-3">
-            <button type="submit" disabled={saving} className="btn-primary">
-                {saving ? "Saving..." : "Save Course"}
-            </button>
-            <button type="button" onClick={onCancel} className="btn-secondary">
+        <div className="flex flex-wrap gap-3">
+            <Button
+                type="submit"
+                disabled={saving}
+                loading={saving}
+                loadingText="Saving…"
+            >
+                Save Course
+            </Button>
+            <Button variant="secondary" type="button" onClick={onCancel}>
                 Cancel
-            </button>
+            </Button>
         </div>
     </form>
     );
 };
 
 const LessonInlineForm = ({ courseId, order, onCreated, onCancel }) => {
-    const [form, setForm] = useState({ ...emptyLessonForm, lesson_order: String(order) });
+    const [form, setForm] = useState({
+        ...emptyLessonForm,
+        lesson_order: String(order),
+        notes_file: null,
+        notes_file_name: "",
+    });
     const [saving, setSaving] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -150,7 +162,7 @@ const LessonInlineForm = ({ courseId, order, onCreated, onCancel }) => {
                 course_id: courseId,
                 title: form.title,
                 video_url: form.video_url || null,
-                notes: form.notes || null,
+                notes_file: form.notes_file || null,
                 lesson_order: Number(form.lesson_order),
                 status: form.status,
             });
@@ -166,85 +178,108 @@ const LessonInlineForm = ({ courseId, order, onCreated, onCancel }) => {
     return (
         <form
             onSubmit={handleSubmit}
-            className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/50 p-4 space-y-3"
+            className="surface-technical mt-4 space-y-4 rounded-2xl p-5"
         >
-            <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--accent)" }}>
+            <div className="flex items-center justify-between gap-3">
+                <h4 className="flex items-center gap-2 font-display text-sm font-semibold text-accent">
                     <Video size={14} />
                     Add Lesson #{order}
                 </h4>
-                <button type="button" onClick={onCancel} style={{ color: "var(--muted-foreground)" }} className="hover:opacity-70">
+
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    type="button"
+                    onClick={onCancel}
+                    aria-label="Skip"
+                >
                     <X size={16} />
-                </button>
+                </Button>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                    <label className="label-text">Lesson Title *</label>
-                    <input
+            <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Lesson Title" required className="sm:col-span-2">
+                    <Input
                         type="text"
                         required
                         value={form.title}
                         onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                        className="input-field"
                         placeholder="Introduction to React"
                     />
-                </div>
+                </Field>
 
-                <div className="sm:col-span-2">
-                    <label className="label-text">YouTube Video URL</label>
-                    <input
+                <Field
+                    label="YouTube Video URL"
+                    hint="Only YouTube links allowed"
+                    className="sm:col-span-2"
+                >
+                    <Input
                         type="url"
                         value={form.video_url}
                         onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))}
-                        className="input-field"
                         placeholder="https://www.youtube.com/watch?v=..."
                     />
-                    <p className="mt-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>Only YouTube links allowed</p>
-                </div>
+                </Field>
 
-                <div>
-                    <label className="label-text">Order</label>
-                    <input
+                <Field label="Order">
+                    <Input
                         type="number"
                         min={1}
                         value={form.lesson_order}
                         onChange={(e) => setForm((f) => ({ ...f, lesson_order: e.target.value }))}
-                        className="input-field"
                     />
-                </div>
+                </Field>
 
-                <div>
-                    <label className="label-text">Status</label>
-                    <select
+                <Field label="Status">
+                    <Select
                         value={form.status}
                         onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-                        className="input-field"
                     >
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
-                    </select>
-                </div>
+                    </Select>
+                </Field>
 
-                <div className="sm:col-span-2">
-                    <label className="label-text">Notes</label>
-                    <textarea
-                        rows={3}
-                        value={form.notes}
-                        onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                        className="input-field"
-                        placeholder="Lesson notes or description..."
+                <Field label="Notes File (.md)" className="sm:col-span-2">
+                    <Input
+                        type="file"
+                        accept=".md"
+                        onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            if (file && !file.name.endsWith(".md")) {
+                                toast.error("Sirf .md file allow hai!");
+                                e.target.value = "";
+                                return;
+                            }
+                            setForm((f) => ({
+                                ...f,
+                                notes_file: file,
+                                notes_file_name: file ? file.name : "",
+                            }));
+                        }}
+                        className="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-surface-2 file:px-3 file:py-1.5 file:text-sm"
                     />
-                </div>
+
+                    {form.notes_file_name && (
+                        <p className="mt-1.5 text-xs font-medium text-teal">
+                            Selected: {form.notes_file_name}
+                        </p>
+                    )}
+                </Field>
             </div>
 
-            <div className="flex gap-3">
-                <button type="submit" disabled={saving} className="btn-primary text-sm">
-                    {saving ? "Adding..." : "Add Lesson"}
-                </button>
-                <button type="button" onClick={onCancel} className="btn-secondary text-sm">
+            <div className="flex flex-wrap gap-3">
+                <Button
+                    type="submit"
+                    disabled={saving}
+                    loading={saving}
+                    loadingText="Adding…"
+                >
+                    Add Lesson
+                </Button>
+                <Button variant="secondary" type="button" onClick={onCancel}>
                     Skip
-                </button>
+                </Button>
             </div>
         </form>
     );
@@ -294,8 +329,8 @@ const Courses = () => {
 
     if (loading) {
         return (
-            <div className="space-y-6">
-                <h1 className="page-title">Courses</h1>
+            <div>
+                <PageHeader eyebrow="course registry" title="Courses" />
                 <SkeletonList count={4} />
             </div>
         );
@@ -377,29 +412,27 @@ const Courses = () => {
 
     return (
         <div>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="page-title">Courses</h1>
-                    <p className="-mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                        Manage all courses ({courses.length}).
-                    </p>
-                </div>
-
-                {!showCreate && !createdCourseId && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setEditingId(null);
-                            createForm.setForm(emptyCourseForm);
-                            setShowCreate(true);
-                        }}
-                        className="btn-primary shrink-0"
-                    >
-                        <Plus size={16} />
-                        Add Course
-                    </button>
-                )}
-            </div>
+            <PageHeader
+                eyebrow="course registry"
+                title="Courses"
+                subtitle={`Manage all courses (${courses.length}).`}
+                action={
+                    !showCreate && !createdCourseId && (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setEditingId(null);
+                                createForm.setForm(emptyCourseForm);
+                                setShowCreate(true);
+                            }}
+                            className="shrink-0"
+                        >
+                            <Plus size={16} />
+                            Add Course
+                        </Button>
+                    )
+                }
+            />
 
             {showCreate && !createdCourseId && (
                 <div className="mb-6">
@@ -414,25 +447,26 @@ const Courses = () => {
 
             {createdCourseId && (
                 <div className="mb-6">
-                    <div className="card border-l-4 border-l-emerald-500 p-5">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="font-semibold" style={{ color: "var(--foreground)" }}>
+                    <div className="card border-l-4 border-l-teal p-5 sm:p-6">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="min-w-0">
+                                <h3 className="font-display text-base font-bold text-fg">
                                     Course created! Now add lessons.
                                 </h3>
-                                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                                <p className="mt-1 text-sm text-muted">
                                     {lessonCount > 0
                                         ? `${lessonCount} lesson(s) added so far.`
                                         : "Add your first lesson below."}
                                 </p>
                             </div>
-                            <button
+
+                            <Button
                                 type="button"
                                 onClick={resetForms}
-                                className="btn-primary text-sm"
+                                className="shrink-0"
                             >
                                 Done
-                            </button>
+                            </Button>
                         </div>
 
                         <LessonInlineForm
@@ -446,11 +480,13 @@ const Courses = () => {
             )}
 
             {courses.length === 0 ? (
-                <div className="card px-6 py-12 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-                    No courses yet. Create your first course using "Add Course".
-                </div>
+                <EmptyState
+                    icon={BookOpen}
+                    title="No courses yet."
+                    message={'Create your first course using "Add Course".'}
+                />
             ) : (
-                <div className="space-y-4">
+                <div className="stagger space-y-4">
                     {courses.map((course) => (
                         <div key={course.id}>
                             {editingId === course.id ? (
@@ -461,48 +497,59 @@ const Courses = () => {
                                     saving={saving}
                                 />
                             ) : (
-                                <div className="card p-5">
+                                <div className="card p-5 sm:p-6">
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <h3 className="font-semibold" style={{ color: "var(--foreground)" }}>
+                                            <div className="flex flex-wrap items-center gap-2.5">
+                                                <h3 className="font-display text-base font-bold text-fg">
                                                     {course.title}
                                                 </h3>
-                                                <span
-                                                    className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                                                        course.status === "published"
-                                                            ? "bg-emerald-100 text-emerald-700"
-                                                            : "bg-muted text-muted"
-                                                    }`}
+
+                                                <Badge
+                                                    tone={course.status === "published" ? "gold" : "neutral"}
+                                                    dot
                                                 >
                                                     {course.status}
-                                                </span>
+                                                </Badge>
                                             </div>
 
-                                            <p className="mt-1 line-clamp-2 max-w-3xl text-sm" style={{ color: "var(--muted-foreground)" }}>
+                                            <p className="mt-2 line-clamp-2 max-w-3xl text-sm text-muted">
                                                 {course.description}
                                             </p>
 
-                                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
-                                                <span>{course.category}</span>
-                                                <span>-</span>
-                                                <span>{course.difficulty}</span>
+                                            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                <span className="technical-label">
+                                                    {course.category}
+                                                </span>
+                                                <span aria-hidden="true" className="text-subtle">
+                                                    -
+                                                </span>
+                                                <span className="technical-label">
+                                                    {course.difficulty}
+                                                </span>
                                                 {course.duration && (
                                                     <>
-                                                        <span>-</span>
-                                                        <span>{course.duration}</span>
+                                                        <span aria-hidden="true" className="text-subtle">
+                                                            -
+                                                        </span>
+                                                        <span className="technical-label">
+                                                            {course.duration}
+                                                        </span>
                                                     </>
                                                 )}
                                             </div>
                                         </div>
 
                                         <div className="flex shrink-0 items-center gap-2">
-                                            <button
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
                                                 type="button"
                                                 onClick={() => fetchLessonsForCourse(course.id)}
                                                 title="View Lessons"
-                                                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition"
-                                                style={{ background: "var(--muted)", color: "var(--accent)" }}
+                                                aria-expanded={Boolean(
+                                                    courseLessons[course.id]
+                                                )}
                                             >
                                                 <ListVideo size={14} />
                                                 {courseLessons[course.id] ? (
@@ -510,34 +557,36 @@ const Courses = () => {
                                                 ) : (
                                                     <ChevronDown size={14} />
                                                 )}
-                                            </button>
+                                            </Button>
 
-                                            <button
+                                            <Button
+                                                variant="ghost"
+                                                size="icon-sm"
                                                 type="button"
                                                 onClick={() => startEdit(course)}
                                                 title="Edit"
-                                                className="rounded-lg p-2.5 transition hover:bg-muted"
-                                                style={{ color: "var(--muted-foreground)" }}
+                                                aria-label="Edit"
                                             >
                                                 <Pencil size={17} />
-                                            </button>
+                                            </Button>
 
-                                            <button
+                                            <Button
+                                                variant="destructive"
+                                                size="icon-sm"
                                                 type="button"
                                                 onClick={() => handleDelete(course)}
                                                 title="Delete"
-                                                className="rounded-lg p-2.5 transition hover:bg-red-50 hover:text-red-600"
-                                                style={{ color: "var(--muted-foreground)" }}
+                                                aria-label="Delete"
                                             >
                                                 <Trash2 size={17} />
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
 
                                     {courseLessons[course.id] && (
-                                        <div className="mt-4 border-t border-warm-border pt-4">
+                                        <div className="mt-4 border-t border-line pt-4">
                                             {courseLessons[course.id].length === 0 ? (
-                                                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                                                <p className="text-sm text-muted">
                                                     No lessons yet.
                                                 </p>
                                             ) : (
@@ -545,35 +594,35 @@ const Courses = () => {
                                                     {courseLessons[course.id].map((lesson, idx) => (
                                                         <div
                                                             key={lesson.id}
-                                                            className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2"
+                                                            className="data-row gap-3 py-2.5"
                                                         >
-                                                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold" style={{ background: "var(--muted)", color: "var(--accent)" }}>
+                                                            <span className="icon-well icon-well-round h-6 w-6 shrink-0 text-[0.65rem] font-bold text-accent">
                                                                 {lesson.lesson_order || idx + 1}
                                                             </span>
-                                                            <span className="min-w-0 flex-1 truncate text-sm" style={{ color: "var(--foreground)" }}>
+
+                                                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
                                                                 {lesson.title}
                                                             </span>
-                                                            <span
-                                                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                                                    lesson.status === "published"
-                                                                        ? "bg-emerald-100 text-emerald-700"
-                                                                        : "bg-muted text-muted"
-                                                                }`}
+
+                                                            <Badge
+                                                                tone={lesson.status === "published" ? "gold" : "neutral"}
                                                             >
                                                                 {lesson.status}
-                                                            </span>
+                                                            </Badge>
                                                         </div>
                                                     ))}
                                                 </div>
                                             )}
 
-                                            <Link
+                                            <ButtonLink
                                                 to={`/admin/courses/${course.id}`}
-                                                className="mt-3 inline-flex items-center gap-1 text-xs font-medium transition hover:opacity-80"
-                                                style={{ color: "var(--accent)" }}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="mt-3"
                                             >
                                                 Manage all lessons
-                                            </Link>
+                                                <ArrowRight size={15} />
+                                            </ButtonLink>
                                         </div>
                                     )}
                                 </div>

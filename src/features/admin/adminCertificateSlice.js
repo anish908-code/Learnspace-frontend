@@ -108,7 +108,7 @@ const adminCertificateSlice = createSlice({
             .addCase(issueCertificate.fulfilled, (state, action) => {
                 state.saving = false;
                 state.successMessage = action.payload.message;
-                toast.success("Certificate issued successfully");
+                toast.success(action.payload.message || "Certificate issued successfully");
 
                 const exists = state.certificates.some(
                     (certificate) =>

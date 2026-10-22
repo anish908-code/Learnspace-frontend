@@ -12,21 +12,29 @@ import {
 import { fetchStudentDashboard } from "../../features/student/studentSlice";
 import Avatar from "../../components/common/Avatar";
 import { SkeletonLine, SkeletonStatCards, SkeletonCardGrid } from "../../components/common/Skeleton";
-import { AlertBanner, EmptyState } from "../../components/common";
+import { PageHeader, StatCard, AlertBanner, EmptyState } from "../../components/common";
+import { ButtonLink } from "../../components/ui/Button";
+import { ProgressBar } from "../../components/ui/Progress";
+import Badge, { StatusLabel } from "../../components/ui/Badge";
+import { SectionMarker, CornerBrackets } from "../../components/ui/Deco";
+import { getChartTheme } from "../../components/charts/chartTheme";
+import { TooltipCard } from "../../components/charts/ChartTooltip";
+import { useTheme } from "../../theme/themeContext";
 
 const statsConfig = [
-    { key: "enrolled", label: "Enrolled Courses", icon: BookOpen },
-    { key: "completed", label: "Completed", icon: Trophy },
-    { key: "unread", label: "Unread Alerts", icon: Bell },
+    { key: "enrolled", label: "Enrolled Courses", icon: BookOpen, tone: "accent" },
+    { key: "completed", label: "Completed", icon: Trophy, tone: "gold" },
+    { key: "unread", label: "Unread Alerts", icon: Bell, tone: "teal" },
 ];
-
-const CHART_COLORS = ["#B8860B", "#D4A84B", "#8B7355", "#A0522D"];
 
 const StudentDashboard = () => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     const { profile } = useSelector((state) => state.studentProfile);
     const { enrollments, notifications, loading, error } = useSelector((state) => state.student);
+
+    const { mode } = useTheme();
+    const theme = getChartTheme(mode);
 
     useEffect(() => {
         dispatch(fetchStudentDashboard());
@@ -35,9 +43,13 @@ const StudentDashboard = () => {
     if (loading && enrollments.length === 0 && !profile) {
         return (
             <div>
+                <SkeletonLine className="mb-8 h-8 w-72" />
+
                 <SkeletonStatCards count={3} />
-                <section className="mt-12">
-                    <SkeletonLine className="mb-4 h-5 w-32" />
+
+                <section className="mt-14">
+                    <SkeletonLine className="mb-6 h-3 w-40" />
+
                     <SkeletonCardGrid count={3} />
                 </section>
             </div>
@@ -57,98 +69,122 @@ const StudentDashboard = () => {
         progress: Number(enrollment.progress || 0),
     }));
 
+    /* Bars cycle through a four-stop rotation drawn from the active theme —
+       hardcoded hex khatam, day/night dono me the same language. */
+    const barTones = [theme.active, theme.done, theme.students, theme.submissions];
+
     return (
         <div>
-            {/* Welcome banner */}
-            <section className="overflow-hidden rounded-lg px-6 py-8 sm:px-8" style={{ background: "var(--foreground)" }}>
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Avatar name={user?.name} src={profile?.profile_image} className="h-14 w-14 border-2 border-white/20 text-base" />
-                        <div>
-                            <h1
-                                className="text-xl sm:text-2xl"
-                                style={{ fontFamily: '"Playfair Display", Georgia, serif', color: "var(--background)", fontWeight: 600 }}
-                            >
-                                Welcome back, {(user?.name || "Student").split(" ")[0]}
-                            </h1>
-                            <p className="mt-1 text-sm" style={{ color: "#A0A0A0" }}>
-                                Continue your learning journey.
-                            </p>
-                        </div>
+            <PageHeader
+                eyebrow="learning workspace"
+                title={`Welcome back, ${(user?.name || "Student").split(" ")[0]}`}
+                subtitle="Continue your learning journey."
+                action={
+                    <ButtonLink to="/student/courses" size="lg">
+                        Browse Courses
+                        <ArrowRight size={16} />
+                    </ButtonLink>
+                }
+            >
+                <div className="mt-8 flex items-center gap-4">
+                    <Avatar
+                        name={user?.name}
+                        src={profile?.profile_image}
+                        className="h-12 w-12 text-base"
+                    />
+
+                    <div className="min-w-0">
+                        <span className="technical-label">Learner profile</span>
+                        <p className="mt-1.5 truncate font-display text-sm font-semibold text-fg">
+                            {user?.name || "Student"}
+                        </p>
                     </div>
-                    <Link to="/student/courses" className="inline-flex items-center gap-1.5 rounded-md px-4 py-2.5 text-sm font-semibold transition" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}>
-                        Browse Courses <ArrowRight size={15} />
-                    </Link>
                 </div>
-            </section>
+            </PageHeader>
 
             {/* Stats */}
-            <section className="mt-8 grid gap-8 sm:grid-cols-3">
-                {statsConfig.map((stat) => {
-                    const Icon = stat.icon;
-                    return (
-                        <div key={stat.key} className="card flex items-center gap-4 p-5">
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--accent-muted)", color: "var(--accent)" }}>
-                                <Icon size={22} />
-                            </span>
-                            <div>
-                                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>{stat.label}</p>
-                                <h2 className="mt-0.5 text-2xl font-bold" style={{ fontFamily: '"Playfair Display", Georgia, serif', color: "var(--foreground)" }}>
-                                    {stats[stat.key]}
-                                </h2>
-                            </div>
-                        </div>
-                    );
-                })}
+            <section className="grid gap-4 sm:grid-cols-3">
+                {statsConfig.map((stat) => (
+                    <StatCard
+                        key={stat.key}
+                        icon={stat.icon}
+                        label={stat.label}
+                        value={stats[stat.key]}
+                        tone={stat.tone}
+                    />
+                ))}
             </section>
 
             {/* My Courses */}
-            <section className="mt-12">
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-lg" style={{ fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 600, color: "var(--foreground)" }}>
-                        My Courses
-                    </h2>
-                    <Link to="/student/courses" className="text-sm font-medium transition hover:underline" style={{ color: "var(--accent)" }}>
+            <section className="mt-14">
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                    <SectionMarker index={1}>My Courses</SectionMarker>
+
+                    <Link
+                        to="/student/courses"
+                        className="text-sm font-semibold text-accent transition-colors hover:text-accent-bright"
+                    >
                         View all
                     </Link>
                 </div>
 
                 {enrollments.length === 0 ? (
-                    <EmptyState
-                        icon={BookOpen}
-                        title="No courses yet"
-                        message="You haven't enrolled in any course yet."
-                        action={<Link to="/student/courses" className="btn-primary">Browse Courses</Link>}
-                    />
+                    <div className="mt-6">
+                        <EmptyState
+                            icon={BookOpen}
+                            title="No courses yet"
+                            message="You haven't enrolled in any course yet."
+                            action={
+                                <ButtonLink to="/student/courses">
+                                    Browse Courses
+                                </ButtonLink>
+                            }
+                        />
+                    </div>
                 ) : (
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                         {enrollments.map((enrollment) => (
                             <Link
                                 key={enrollment.id}
                                 to={`/student/courses/${enrollment.course_id}`}
-                                className="card-hover block p-5"
+                                className="card-hover spotlight group flex h-full flex-col p-5 sm:p-6"
                             >
-                                <span className="section-label text-[10px]">{enrollment.course?.category || "General"}</span>
-                                <h3 className="mt-3 line-clamp-1 text-base font-semibold" style={{ fontFamily: '"Playfair Display", Georgia, serif', color: "var(--foreground)" }}>
+                                <div className="flex items-start justify-between gap-3">
+                                    <span className="technical-label line-clamp-1 min-w-0 flex-1">
+                                        {enrollment.course?.category || "General"}
+                                    </span>
+
+                                    {enrollment.completed && (
+                                        <Badge tone="gold" dot className="shrink-0">
+                                            Course Completed
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                <h3 className="mt-4 line-clamp-1 font-display text-base font-bold text-fg">
                                     {enrollment.course?.title}
                                 </h3>
+
                                 <div className="mt-5">
-                                    <div className="mb-2 flex justify-between text-sm">
-                                        <span style={{ color: "var(--muted-foreground)" }}>Progress</span>
-                                        <span className="font-semibold" style={{ color: "var(--foreground)" }}>{Number(enrollment.progress || 0)}%</span>
+                                    <div className="mb-2.5 flex items-baseline justify-between gap-3">
+                                        <span className="technical-label">Progress</span>
+                                        <span className="numeric text-sm font-semibold text-fg">
+                                            {Number(enrollment.progress || 0)}%
+                                        </span>
                                     </div>
-                                    <div className="h-1.5 overflow-hidden rounded-full" style={{ background: "var(--muted)" }}>
-                                        <div className="h-full rounded-full transition-all" style={{ background: "var(--accent)", width: `${Number(enrollment.progress || 0)}%` }} />
-                                    </div>
+
+                                    <ProgressBar
+                                        value={Number(enrollment.progress || 0)}
+                                        tone={enrollment.completed ? "teal" : "accent"}
+                                    />
                                 </div>
-                                <div className="mt-4 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                                    Lessons completed: <span className="font-medium" style={{ color: "var(--foreground)" }}>{enrollment.lessons_completed}</span>
-                                </div>
-                                {enrollment.completed && (
-                                    <div className="mt-4 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium" style={{ background: "var(--accent-muted)", color: "var(--accent)" }}>
-                                        <Trophy size={13} /> Course Completed
-                                    </div>
-                                )}
+
+                                <p className="mt-4 text-sm text-muted">
+                                    Lessons completed:{" "}
+                                    <span className="font-semibold text-fg">
+                                        {enrollment.lessons_completed}
+                                    </span>
+                                </p>
                             </Link>
                         ))}
                     </div>
@@ -157,28 +193,51 @@ const StudentDashboard = () => {
 
             {/* Progress Chart */}
             {chartData.length > 0 && (
-                <section className="card mt-12 p-6">
-                    <h2 className="mb-4" style={{ fontFamily: '"IBM Plex Mono", monospace', fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--accent)" }}>
-                        Course Progress
-                    </h2>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                                <XAxis dataKey="name" tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={{ stroke: "var(--border)" }} />
-                                <YAxis tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                                <Tooltip
-                                    contentStyle={{ borderRadius: "8px", border: "1px solid var(--border)", fontSize: "13px" }}
-                                    cursor={{ fill: "rgba(184,134,11,0.05)" }}
-                                    formatter={(value) => [`${value}%`, "Progress"]}
-                                />
-                                <Bar dataKey="progress" radius={[4, 4, 0, 0]} barSize={48}>
-                                    {chartData.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                <section className="mt-14">
+                    <SectionMarker index={2}>Course Progress</SectionMarker>
+
+                    <div className="card relative mt-6 overflow-hidden p-6 sm:p-7">
+                        <CornerBrackets />
+
+                        <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                            <span className="technical-label">Completion percentage</span>
+
+                            <StatusLabel>{chartData.length} courses tracked</StatusLabel>
+                        </div>
+
+                        <div className="relative mt-6 h-72">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} vertical={false} />
+                                    <XAxis dataKey="name" tick={{ fontSize: 13, fill: theme.tick }} tickLine={false} axisLine={{ stroke: theme.axis }} />
+                                    <YAxis tick={{ fontSize: 12, fill: theme.tick }} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                                    <Tooltip
+                                        cursor={{ fill: theme.cursor }}
+                                        content={({ active, payload, label }) => {
+                                            if (!active || !payload?.length) return null;
+
+                                            return (
+                                                <TooltipCard
+                                                    title={label}
+                                                    rows={[
+                                                        {
+                                                            label: "Progress",
+                                                            value: `${payload[0].value}%`,
+                                                            color: barTones[0],
+                                                        },
+                                                    ]}
+                                                />
+                                            );
+                                        }}
+                                    />
+                                    <Bar dataKey="progress" radius={[4, 4, 0, 0]} barSize={48}>
+                                        {chartData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={barTones[index % barTones.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </section>
             )}

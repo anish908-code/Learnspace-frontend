@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Inbox } from "lucide-react";
 
 import {
     fetchAdminSubmissions,
@@ -10,6 +10,11 @@ import {
 } from "../../features/admin/adminSubmissionSlice";
 import { formatDate } from "../../utils/date";
 import { SkeletonList } from "../../components/common/Skeleton";
+import { PageHeader, EmptyState } from "../../components/common";
+import Button from "../../components/ui/Button";
+import Badge, { StatusLabel } from "../../components/ui/Badge";
+import { Field, Select, Textarea } from "../../components/ui/Field";
+import { SectionMarker } from "../../components/ui/Deco";
 
 const filterTabs = [
     { key: "all", label: "All" },
@@ -24,12 +29,15 @@ const reviewStatusOptions = [
     "rejected",
 ];
 
-const statusBadge = {
-    pending: "bg-muted text-muted",
-    under_review: "bg-amber-100 text-amber-700",
-    approved: "bg-emerald-100 text-emerald-700",
-    rejected: "bg-red-100 text-red-700",
-    changes_required: "bg-orange-100 text-orange-700",
+/* Review state ka ek hi accent — pending/under review quiet, approve teal,
+   reject/changes danger, graded accent. */
+const statusTone = {
+    pending: "neutral",
+    under_review: "neutral",
+    approved: "teal",
+    rejected: "danger",
+    changes_required: "danger",
+    graded: "accent",
 };
 
 /*
@@ -45,10 +53,9 @@ const ReviewCard = ({ submission }) => {
     const [feedback, setFeedback] = useState(submission.feedback || "");
     const [open, setOpen] = useState(false);
 
-    useEffect(() => {
-        setStatus(submission.status);
-        setFeedback(submission.feedback || "");
-    }, [submission.status, submission.feedback]);
+    // Server data change hone par local form reset karne ke liye effect ki
+    // jagah `key` use hota hai (parent me) — isse cascading render nahi hota
+    // aur component ka initial state hamesha props se match karta hai.
 
     const handleReview = () => {
         dispatch(
@@ -65,40 +72,44 @@ const ReviewCard = ({ submission }) => {
 
     return (
         <div
-            className="card cursor-pointer select-none p-5"
-            style={{ transition: "box-shadow 0.2s" }}
+            className="card-hover spotlight cursor-pointer select-none p-5 sm:p-6"
             onClick={() => setOpen((prev) => !prev)}
         >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold" style={{ color: "var(--foreground)" }}>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <span className="icon-well h-9 w-9 shrink-0 text-accent">
+                            <ClipboardCheck size={16} strokeWidth={2.1} />
+                        </span>
+
+                        <h3 className="font-display text-base font-bold text-fg">
                             {submission.project?.title || "-"}
                         </h3>
 
-                        <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
-                                statusBadge[submission.status] ||
-                                "bg-muted text-muted"
-                            }`}
+                        <StatusLabel>
+                            {submission.status.replace("_", " ")}
+                        </StatusLabel>
+
+                        <Badge
+                            tone={statusTone[submission.status] || "neutral"}
+                            dot
                         >
                             {submission.status.replace("_", " ")}
-                        </span>
+                        </Badge>
                     </div>
 
-                    <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="mt-2 text-sm text-muted">
                         {submission.student?.user?.name || "-"} ·{" "}
                         {submission.student?.college || "—"}
                     </p>
 
-                    <div className="mt-2 space-y-1.5">
+                    <div className="mt-3 space-y-2">
                         {submission.github_link && (
                             <a
                                 href={submission.github_link}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center gap-1.5 text-xs font-medium transition hover:opacity-80"
-                                style={{ color: "var(--accent)" }}
+                                className="flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent-bright"
                             >
                                 <span className="shrink-0 text-muted">GitHub:</span>
                                 <span className="break-all">{submission.github_link}</span>
@@ -110,8 +121,7 @@ const ReviewCard = ({ submission }) => {
                                 href={submission.live_demo}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center gap-1.5 text-xs font-medium transition hover:opacity-80"
-                                style={{ color: "var(--accent)" }}
+                                className="flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent-bright"
                             >
                                 <span className="shrink-0 text-muted">Live Demo:</span>
                                 <span className="break-all">{submission.live_demo}</span>
@@ -119,98 +129,112 @@ const ReviewCard = ({ submission }) => {
                         )}
 
                         {submission.documentation && (
-                            <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                                <span className="font-medium" style={{ color: "var(--foreground)" }}>Documentation:</span>
-                                <p className="mt-0.5 whitespace-pre-wrap break-words">{submission.documentation}</p>
+                            <div className="text-xs text-muted">
+                                <span className="font-semibold text-fg">
+                                    Documentation:
+                                </span>
+                                <p className="mt-0.5 whitespace-pre-wrap break-words">
+                                    {submission.documentation}
+                                </p>
                             </div>
                         )}
 
                         {submission.description && (
-                            <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                                <span className="font-medium" style={{ color: "var(--foreground)" }}>Description:</span>
-                                <p className="mt-0.5 whitespace-pre-wrap break-words">{submission.description}</p>
+                            <div className="text-xs text-muted">
+                                <span className="font-semibold text-fg">
+                                    Description:
+                                </span>
+                                <p className="mt-0.5 whitespace-pre-wrap break-words">
+                                    {submission.description}
+                                </p>
                             </div>
                         )}
                     </div>
 
-                    <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
-                        Submitted {formatDate(submission.created_at)}
-                        {submission.reviewed_at &&
-                            ` · Reviewed ${formatDate(
-                                submission.reviewed_at
-                            )}`}
+                    <p className="mt-3 flex flex-wrap items-center gap-x-2 text-[0.6875rem] text-subtle">
+                        <span className="numeric">
+                            Submitted {formatDate(submission.created_at)}
+                            {submission.reviewed_at &&
+                                ` · Reviewed ${formatDate(
+                                    submission.reviewed_at
+                                )}`}
+                        </span>
                     </p>
 
                     {submission.feedback && !open && (
-                        <p className="mt-2 rounded-lg bg-muted px-3 py-2 text-sm ring-1 ring-inset ring-warm-border" style={{ color: "var(--foreground)" }}>
-                            <span className="font-medium">Feedback:</span>{" "}
+                        <p className="mt-3 rounded-xl border border-line bg-surface-2/70 px-3.5 py-2.5 text-sm text-fg">
+                            <span className="font-semibold">Feedback:</span>{" "}
                             {submission.feedback}
                         </p>
                     )}
                 </div>
 
-                <button
+                <Button
+                    variant="secondary"
                     type="button"
                     onClick={(e) => {
                         e.stopPropagation();
                         setOpen((prev) => !prev);
                     }}
-                    className="btn-secondary shrink-0"
+                    aria-expanded={open}
+                    className="shrink-0"
                 >
                     <ClipboardCheck size={15} />
                     {open
                         ? "Close"
                         : submission.status.replace("_", " ").charAt(0).toUpperCase() +
                           submission.status.replace("_", " ").slice(1)}
-                </button>
+                </Button>
             </div>
 
             {/* Review form */}
             {open && (
                 <div
-                    className="mt-4 space-y-4 border-t border-warm-border pt-4"
+                    className="mt-5 border-t border-line pt-5"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div>
-                        <label className="label-text">Status</label>
+                    <div className="surface-technical rounded-2xl p-5">
+                        <Field label="Status">
+                            <Select
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value)}
+                                className="capitalize"
+                            >
+                                {reviewStatusOptions.map((option) => (
+                                    <option
+                                        key={option}
+                                        value={option}
+                                        className="capitalize"
+                                    >
+                                        {option.replace("_", " ")}
+                                    </option>
+                                ))}
+                            </Select>
+                        </Field>
 
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className="input-field capitalize"
+                        <Field
+                            label="Feedback"
+                            className="mt-5"
                         >
-                            {reviewStatusOptions.map((option) => (
-                                <option
-                                    key={option}
-                                    value={option}
-                                    className="capitalize"
-                                >
-                                    {option.replace("_", " ")}
-                                </option>
-                            ))}
-                        </select>
+                            <Textarea
+                                rows={3}
+                                value={feedback}
+                                onChange={(e) => setFeedback(e.target.value)}
+                                placeholder="Feedback for the student (optional)"
+                            />
+                        </Field>
+
+                        <Button
+                            type="button"
+                            onClick={handleReview}
+                            disabled={saving}
+                            loading={saving}
+                            loadingText="Saving…"
+                            className="mt-5"
+                        >
+                            Save Review
+                        </Button>
                     </div>
-
-                    <div>
-                        <label className="label-text">Feedback</label>
-
-                        <textarea
-                            rows={3}
-                            value={feedback}
-                            onChange={(e) => setFeedback(e.target.value)}
-                            className="input-field"
-                            placeholder="Feedback for the student (optional)"
-                        />
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={handleReview}
-                        disabled={saving}
-                        className="btn-primary"
-                    >
-                        {saving ? "Saving..." : "Save Review"}
-                    </button>
                 </div>
             )}
         </div>
@@ -246,42 +270,46 @@ const Submissions = () => {
 
     return (
         <div>
-            <h1 className="page-title">Submissions</h1>
-
-            <p className="-mt-1 mb-6 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                Review student project submissions ({submissions.length}{" "}
-                total).
-            </p>
+            <PageHeader
+                eyebrow="review desk"
+                title="Submissions"
+                subtitle={`Review student project submissions (${submissions.length} total).`}
+            />
 
             {/* Filter tabs */}
-            <div className="mb-6 flex flex-wrap gap-2">
-                {filterTabs.map((tab) => (
-                    <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setFilter(tab.key)}
-                        className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition ${
-                            filter === tab.key
-                                ? "btn-primary"
-                                : "card ring-1 ring-inset ring-warm-border hover:bg-muted"
-                        }`}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
+            <div className="mb-6">
+                <SectionMarker index={1}>Review queue</SectionMarker>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                    {filterTabs.map((tab) => (
+                        <Button
+                            key={tab.key}
+                            variant={filter === tab.key ? "primary" : "outline"}
+                            size="sm"
+                            type="button"
+                            onClick={() => setFilter(tab.key)}
+                        >
+                            {tab.label}
+                        </Button>
+                    ))}
+                </div>
             </div>
 
             {/* List */}
             {loading && submissions.length === 0 ? (
                 <SkeletonList count={4} />
             ) : visible.length === 0 ? (
-                <div className="card px-6 py-12 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-                    No submissions match this filter.
-                </div>
+                <EmptyState
+                    icon={Inbox}
+                    title="No submissions match this filter."
+                />
             ) : (
-                <div className="space-y-4">
+                <div className="stagger space-y-4">
                     {visible.map((submission) => (
-                        <ReviewCard key={submission.id} submission={submission} />
+                        <ReviewCard
+                            key={`${submission.id}-${submission.status}-${submission.feedback || ""}`}
+                            submission={submission}
+                        />
                     ))}
                 </div>
             )}

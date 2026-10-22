@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LogIn } from "lucide-react";
 
 import { loginUser } from "../../features/auth/authSlice";
 import { AuthCard, AuthField } from "../../components/auth";
+import { Input } from "../../components/ui/Field";
+import Button from "../../components/ui/Button";
 
 const Login = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const location = useLocation();
 
-    const { loading, validationErrors } = useSelector(
-        (state) => state.auth
-    );
+    const { loading, validationErrors } = useSelector((state) => state.auth);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -44,59 +45,51 @@ const Login = () => {
     };
 
     return (
-        <AuthCard title="Welcome Back" subtitle="Login to your LearnSpace account">
+        <AuthCard title="Welcome back" subtitle="Log in to continue your coursework.">
             <form onSubmit={handleSubmit} className="space-y-5">
                 <AuthField id="email" label="Email" error={validationErrors?.email?.[0]}>
-                    <input
+                    <Input
                         id="email"
                         name="email"
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="input-field"
-                        placeholder="Enter your email"
+                        invalid={Boolean(validationErrors?.email?.[0])}
+                        placeholder="you@school.edu"
                     />
                 </AuthField>
 
                 <AuthField id="password" label="Password" error={validationErrors?.password?.[0]}>
-                    <input
+                    <Input
                         id="password"
                         name="password"
                         type="password"
                         value={formData.password}
                         onChange={handleChange}
                         required
-                        className="input-field"
-                        placeholder="Enter your password"
+                        invalid={Boolean(validationErrors?.password?.[0])}
+                        placeholder="••••••••"
                     />
                 </AuthField>
 
                 <div className="flex justify-end">
-                    <button
-                        type="button"
-                        onClick={() => navigate("/forgot-password")}
-                        className="text-sm font-medium transition hover:underline"
-                        style={{ color: "var(--accent)" }}
-                    >
-                        Forgot Password?
-                    </button>
+                    <Link to="/forgot-password" className="text-xs font-medium text-accent transition-colors hover:text-accent-bright">
+                        Forgot password?
+                    </Link>
                 </div>
 
-                <button type="submit" disabled={loading} className="btn-primary w-full">
-                    {loading ? "Logging in..." : "Login"}
-                </button>
+                <Button type="submit" size="lg" fullWidth loading={loading} loadingText="Logging in…">
+                    <LogIn size={16} />
+                    Log in
+                </Button>
             </form>
-            <p className="mt-5 text-center text-sm font-medium" style={{ color: "var(--foreground)" }}>
+
+            <p className="pt-2 text-center text-sm text-muted">
                 Don&apos;t have an account?{" "}
-                <button
-                    type="button"
-                    onClick={() => navigate("/register")}
-                    className="font-semibold transition hover:underline"
-                    style={{ color: "var(--accent)" }}
-                >
+                <Link to="/register" className="font-semibold text-accent transition-colors hover:text-accent-bright">
                     Register
-                </button>
+                </Link>
             </p>
         </AuthCard>
     );

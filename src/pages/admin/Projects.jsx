@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderGit2 } from "lucide-react";
 
 import {
     fetchAdminProjects,
@@ -12,6 +12,11 @@ import {
 } from "../../features/admin/adminProjectSlice";
 import { fetchAdminCourses } from "../../features/admin/adminCourseSlice";
 import { SkeletonList } from "../../components/common/Skeleton";
+import { PageHeader, EmptyState } from "../../components/common";
+import Button from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import { Field, Input, Textarea, Select } from "../../components/ui/Field";
+import { SectionMarker } from "../../components/ui/Deco";
 
 const emptyForm = {
     course_id: "",
@@ -24,23 +29,27 @@ const emptyForm = {
     status: "draft",
 };
 
+/* Difficulty ka emphasis ek hi accent rakhta hai — beginner quiet, advanced loud */
+const DIFFICULTY_TONE = {
+    Beginner: "neutral",
+    Intermediate: "accent",
+    Advanced: "gold",
+};
+
 const ProjectForm = ({ form, setters, courses, onSubmit, onCancel, saving, submitLabel }) => (
     <form
-        className="card space-y-4 border-l-4 border-l-accent p-6"
+        className="card-accent-top space-y-5 p-6 sm:p-7"
         onSubmit={(event) => {
             event.preventDefault();
             onSubmit();
         }}
     >
-        <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-                <label className="label-text">Course *</label>
-
-                <select
+        <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Course" required>
+                <Select
                     required
                     value={form.course_id}
                     onChange={(e) => setters.setField("course_id", e.target.value)}
-                    className="input-field"
                 >
                     <option value="">Select a course</option>
                     {courses.map((course) => (
@@ -48,114 +57,98 @@ const ProjectForm = ({ form, setters, courses, onSubmit, onCancel, saving, submi
                             {course.title}
                         </option>
                     ))}
-                </select>
-            </div>
+                </Select>
+            </Field>
 
-            <div>
-                <label className="label-text">Title *</label>
-
-                <input
+            <Field label="Title" required>
+                <Input
                     type="text"
                     required
                     value={form.title}
                     onChange={(e) => setters.setField("title", e.target.value)}
-                    className="input-field"
                     placeholder="Project ka naam"
                 />
-            </div>
+            </Field>
 
-            <div className="sm:col-span-2">
-                <label className="label-text">Description</label>
-
-                <textarea
+            <Field label="Description" className="sm:col-span-2">
+                <Textarea
                     rows={3}
                     value={form.description}
                     onChange={(e) =>
                         setters.setField("description", e.target.value)
                     }
-                    className="input-field"
                 />
-            </div>
+            </Field>
 
-            <div>
-                <label className="label-text">Required Skills</label>
-
-                <input
+            <Field label="Required Skills">
+                <Input
                     type="text"
                     value={form.required_skills}
                     onChange={(e) =>
                         setters.setField("required_skills", e.target.value)
                     }
-                    className="input-field"
                     placeholder="React, Laravel"
                 />
-            </div>
+            </Field>
 
-            <div>
-                <label className="label-text">Difficulty</label>
-
-                <select
+            <Field label="Difficulty">
+                <Select
                     value={form.difficulty}
                     onChange={(e) =>
                         setters.setField("difficulty", e.target.value)
                     }
-                    className="input-field"
                 >
                     <option>Beginner</option>
                     <option>Intermediate</option>
                     <option>Advanced</option>
-                </select>
-            </div>
+                </Select>
+            </Field>
 
-            <div>
-                <label className="label-text">Deadline</label>
-
-                <input
+            <Field label="Deadline">
+                <Input
                     type="date"
                     value={form.deadline}
                     onChange={(e) =>
                         setters.setField("deadline", e.target.value)
                     }
-                    className="input-field"
                 />
-            </div>
+            </Field>
 
-            <div>
-                <label className="label-text">Status</label>
-
-                <select
+            <Field label="Status">
+                <Select
                     value={form.status}
                     onChange={(e) => setters.setField("status", e.target.value)}
-                    className="input-field"
                 >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
-                </select>
-            </div>
+                </Select>
+            </Field>
 
-            <div className="sm:col-span-2">
-                <label className="label-text">Requirements</label>
-
-                <textarea
+            <Field label="Requirements" className="sm:col-span-2">
+                <Textarea
                     rows={2}
                     value={form.requirements}
                     onChange={(e) =>
                         setters.setField("requirements", e.target.value)
                     }
-                    className="input-field"
                     placeholder="What needs to be delivered"
                 />
-            </div>
+            </Field>
         </div>
 
-        <div className="flex gap-3">
-            <button type="submit" disabled={saving} className="btn-primary">
-                {saving ? "Saving..." : submitLabel}
-            </button>
+        <div className="flex flex-wrap gap-3">
+            <Button
+                type="submit"
+                disabled={saving}
+                loading={saving}
+                loadingText="Saving…"
+            >
+                {submitLabel}
+            </Button>
 
-            <button type="button" onClick={onCancel} className="btn-secondary">
+            <Button variant="secondary" type="button" onClick={onCancel}>
                 Cancel
-            </button>
+            </Button>
         </div>
     </form>
 );
@@ -264,30 +257,27 @@ const Projects = () => {
 
     return (
         <div>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="page-title">Projects</h1>
-
-                    <p className="-mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                        Manage all projects ({projects.length}).
-                    </p>
-                </div>
-
-                {!showCreate && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setEditingId(null);
-                            setForm(emptyForm);
-                            setShowCreate(true);
-                        }}
-                        className="btn-primary shrink-0"
-                    >
-                        <Plus size={16} />
-                        Add Project
-                    </button>
-                )}
-            </div>
+            <PageHeader
+                eyebrow="project register"
+                title="Projects"
+                subtitle={`Manage all projects (${projects.length}).`}
+                action={
+                    !showCreate && (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setEditingId(null);
+                                setForm(emptyForm);
+                                setShowCreate(true);
+                            }}
+                            className="shrink-0"
+                        >
+                            <Plus size={16} />
+                            Add Project
+                        </Button>
+                    )
+                }
+            />
 
             {/* Create form */}
             {showCreate && (
@@ -304,15 +294,21 @@ const Projects = () => {
                 </div>
             )}
 
+            <div className="mb-5">
+                <SectionMarker index={1}>Project register</SectionMarker>
+            </div>
+
             {/* Project list */}
             {loading && projects.length === 0 ? (
                 <SkeletonList count={3} />
             ) : projects.length === 0 ? (
-                <div className="card px-6 py-12 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-                    No projects yet. Create your first project.
-                </div>
+                <EmptyState
+                    icon={FolderGit2}
+                    title="No projects yet."
+                    message="Create your first project."
+                />
             ) : (
-                <div className="space-y-4">
+                <div className="stagger space-y-3">
                     {projects.map((project) =>
                         editingId === project.id ? (
                             <ProjectForm
@@ -328,40 +324,52 @@ const Projects = () => {
                         ) : (
                             <div
                                 key={project.id}
-                                className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center"
+                                className="data-row flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4"
                             >
+                                <span className="icon-well hidden h-9 w-9 shrink-0 text-accent sm:inline-flex">
+                                    <FolderGit2 size={16} strokeWidth={2.1} />
+                                </span>
+
                                 <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="font-semibold" style={{ fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 600, color: "var(--foreground)" }}>
+                                    <div className="flex flex-wrap items-center gap-2.5">
+                                        <h3 className="truncate font-display text-sm font-bold text-fg">
                                             {project.title}
                                         </h3>
 
-                                        <span
-                                            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                                                project.status === "published"
-                                                    ? "bg-emerald-100 text-emerald-700"
-                                                    : "bg-muted text-muted-foreground"
-                                            }`}
+                                        <Badge
+                                            tone={DIFFICULTY_TONE[project.difficulty] || "neutral"}
+                                        >
+                                            {project.difficulty}
+                                        </Badge>
+
+                                        <Badge
+                                            tone={project.status === "published" ? "gold" : "neutral"}
+                                            dot
                                         >
                                             {project.status}
-                                        </span>
+                                        </Badge>
                                     </div>
 
-                                    <p className="mt-1 line-clamp-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                                    <p className="mt-1.5 line-clamp-1 text-sm text-muted">
                                         {project.description ||
                                             "No description"}
                                     </p>
 
-                                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
-                                        <span>
+                                    <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                        <span className="technical-label">
                                             {project.course?.title || "—"}
                                         </span>
-                                        <span>•</span>
-                                        <span>{project.difficulty}</span>
+
                                         {project.deadline && (
                                             <>
-                                                <span>•</span>
-                                                <span>
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="text-subtle"
+                                                >
+                                                    ·
+                                                </span>
+
+                                                <span className="technical-label">
                                                     Deadline{" "}
                                                     {project.deadline.slice(
                                                         0,
@@ -374,25 +382,27 @@ const Projects = () => {
                                 </div>
 
                                 <div className="flex shrink-0 items-center gap-2">
-                                    <button
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
                                         type="button"
                                         onClick={() => startEdit(project)}
                                         title="Edit"
-                                        className="rounded-lg p-2.5 transition hover:bg-accent-muted"
-                                        style={{ color: "var(--muted-foreground)" }}
+                                        aria-label="Edit"
                                     >
                                         <Pencil size={17} />
-                                    </button>
+                                    </Button>
 
-                                    <button
+                                    <Button
+                                        variant="destructive"
+                                        size="icon-sm"
                                         type="button"
                                         onClick={() => handleDelete(project)}
                                         title="Delete"
-                                        className="rounded-lg p-2.5 transition hover:bg-red-50 hover:text-red-600"
-                                        style={{ color: "var(--muted-foreground)" }}
+                                        aria-label="Delete"
                                     >
                                         <Trash2 size={17} />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         )

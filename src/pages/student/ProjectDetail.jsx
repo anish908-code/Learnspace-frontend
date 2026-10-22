@@ -2,10 +2,16 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { ArrowLeft, Clock, FileText } from "lucide-react";
+
 import { fetchProjectDetail, clearCurrentProject, clearProjectError } from "../../features/student/projectSlice";
 import { fetchSubmissions, submitProject, clearSubmissionError } from "../../features/student/submissionSlice";
 import { formatDate } from "../../utils/date";
 import { Skeleton, SkeletonLine } from "../../components/common/Skeleton";
+import { PageHeader, AlertBanner } from "../../components/common";
+import Button from "../../components/ui/Button";
+import { Field, Input, Textarea } from "../../components/ui/Field";
+import { SectionMarker } from "../../components/ui/Deco";
 
 const ProjectDetail = () => {
     const dispatch = useDispatch();
@@ -30,17 +36,37 @@ const ProjectDetail = () => {
     if (loading && !project) {
         return (
             <div>
-                <SkeletonLine className="mb-4 h-3 w-32" />
-                <div className="card p-6">
-                    <SkeletonLine className="h-6 w-1/2" />
-                    <div className="mt-4 space-y-2"><SkeletonLine className="w-full" /><SkeletonLine className="w-full" /><SkeletonLine className="w-2/3" /></div>
-                    <div className="mt-5 flex flex-wrap gap-3"><SkeletonLine className="h-6 w-24" /><SkeletonLine className="h-6 w-24" /><SkeletonLine className="h-6 w-24" /></div>
+                <SkeletonLine className="mb-8 h-8 w-64" />
+
+                <div className="card p-6 sm:p-7">
+                    <SkeletonLine className="h-3 w-28" />
+                    <SkeletonLine className="mt-4 h-7 w-1/2" />
+                    <SkeletonLine className="mt-3 h-3 w-40" />
+                    <div className="mt-5 space-y-2">
+                        <SkeletonLine className="w-full" />
+                        <SkeletonLine className="w-full" />
+                        <SkeletonLine className="w-2/3" />
+                    </div>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                        <SkeletonLine className="h-6 w-24" />
+                        <SkeletonLine className="h-6 w-24" />
+                        <SkeletonLine className="h-6 w-24" />
+                    </div>
                 </div>
-                <div className="mt-5 card p-6">
+
+                <div className="card mt-6 p-6 sm:p-7">
                     <SkeletonLine className="h-4 w-40" />
                     <div className="mt-5 space-y-5">
-                        {[1,2].map((n) => (<div key={n}><SkeletonLine className="h-3 w-28" /><Skeleton className="mt-2 h-11 w-full rounded-md" /></div>))}
-                        <div><SkeletonLine className="h-3 w-24" /><Skeleton className="mt-2 h-24 w-full rounded-md" /></div>
+                        {[1, 2].map((n) => (
+                            <div key={n}>
+                                <SkeletonLine className="h-3 w-28" />
+                                <Skeleton className="mt-2 h-11 w-full rounded-md" />
+                            </div>
+                        ))}
+                        <div>
+                            <SkeletonLine className="h-3 w-24" />
+                            <Skeleton className="mt-2 h-24 w-full rounded-md" />
+                        </div>
                         <Skeleton className="h-10 w-36 rounded-md" />
                     </div>
                 </div>
@@ -51,8 +77,18 @@ const ProjectDetail = () => {
     if (error && !project) {
         return (
             <div>
-                <div className="rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{error}</div>
-                <button type="button" onClick={() => navigate("/student/projects")} className="mt-4 text-sm font-medium transition hover:underline" style={{ color: "var(--muted-foreground)" }}>&larr; Back to Projects</button>
+                <AlertBanner type="error" message={error} />
+
+                <Button
+                    type="button"
+                    onClick={() => navigate("/student/projects")}
+                    variant="ghost"
+                    size="sm"
+                    className="-ml-3"
+                >
+                    <ArrowLeft size={15} />
+                    Back to Projects
+                </Button>
             </div>
         );
     }
@@ -64,76 +100,155 @@ const ProjectDetail = () => {
 
     return (
         <div>
-            <button type="button" onClick={() => navigate("/student/projects")} className="mb-4 text-sm font-medium transition hover:underline" style={{ color: "var(--muted-foreground)" }}>&larr; Back to Projects</button>
+            <Button
+                type="button"
+                onClick={() => navigate("/student/projects")}
+                variant="ghost"
+                size="sm"
+                className="-ml-3 mb-6"
+            >
+                <ArrowLeft size={15} />
+                Back to Projects
+            </Button>
 
-            <div className="card p-6">
-                <h1 className="text-2xl" style={{ fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 600, color: "var(--foreground)" }}>{project.title}</h1>
-                <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>Course: {project.course?.title || "-"}</p>
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: "var(--foreground)", lineHeight: 1.75 }}>{project.description || "No description."}</p>
+            <PageHeader
+                eyebrow="project brief"
+                title={project.title}
+                subtitle={`Course: ${project.course?.title || "-"}`}
+            />
 
-                <div className="mt-5 grid gap-4 border-t pt-4 sm:grid-cols-2 lg:grid-cols-4" style={{ borderColor: "var(--border)" }}>
+            <section className="surface-a rounded-2xl p-6 sm:p-7">
+                <div className="flex items-center gap-2.5">
+                    <span className="icon-well h-9 w-9 shrink-0">
+                        <FileText size={17} strokeWidth={2.1} />
+                    </span>
+                    <span className="technical-label">Overview</span>
+                </div>
+
+                <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-muted">
+                    {project.description || "No description."}
+                </p>
+
+                <div className="rule-line my-6" />
+
+                <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     {[
                         { label: "Difficulty", value: project.difficulty || "-" },
                         { label: "Deadline", value: formatDate(project.deadline) },
                         { label: "Required Skills", value: project.required_skills || "-" },
                         { label: "Requirements", value: project.requirements || "-" },
                     ].map((field) => (
-                        <div key={field.label}>
-                            <p className="section-label text-[10px]">{field.label}</p>
-                            <p className="mt-1 text-sm font-medium" style={{ color: "var(--foreground)" }}>{field.value}</p>
+                        <div key={field.label} className="min-w-0">
+                            <dt className="technical-label">{field.label}</dt>
+                            <dd className="mt-1.5 break-words text-sm font-medium leading-relaxed text-fg">
+                                {field.value}
+                            </dd>
                         </div>
                     ))}
-                </div>
-            </div>
+                </dl>
+            </section>
 
             {approvedSubmission && (
-                <div className="mt-5 flex items-start gap-3 rounded-md border px-4 py-3 text-sm" style={{ borderColor: "#C6F6D5", background: "var(--success-bg)", color: "var(--success)" }}>
-                    <svg className="mt-0.5 h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                    <div>
-                        <p className="font-medium">Project Completed</p>
-                        <p className="mt-0.5 opacity-80">Your submission has been approved by the admin. This project is complete.</p>
-                    </div>
-                </div>
+                <AlertBanner
+                    type="success"
+                    className="mt-6"
+                    message={
+                        <>
+                            Project Completed
+                            <span className="mt-1 block text-[0.8125rem] font-normal opacity-85">
+                                Your submission has been approved by the admin. This project is complete.
+                            </span>
+                        </>
+                    }
+                />
             )}
 
             {activeSubmission && !approvedSubmission && (
-                <div className="mt-5 flex items-start gap-3 rounded-md border px-4 py-3 text-sm" style={{ borderColor: "#FEFCBF", background: "#FEFCE8", color: "#92400E" }}>
-                    <svg className="mt-0.5 h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                    <div>
-                        <p className="font-medium">Under Review</p>
-                        <p className="mt-0.5 opacity-80">Your submission is currently {activeSubmission.status.replace("_", " ")}. You cannot submit again until a decision is made.</p>
+                <div className="surface-technical mt-6 flex items-start gap-3.5 rounded-2xl p-4 sm:p-5">
+                    <span className="icon-well h-9 w-9 shrink-0 text-gold">
+                        <Clock size={17} strokeWidth={2.1} />
+                    </span>
+
+                    <div className="min-w-0">
+                        <p className="font-display text-sm font-bold text-fg">Under Review</p>
+                        <p className="mt-1 text-sm leading-relaxed text-muted">
+                            Your submission is currently{" "}
+                            {activeSubmission.status.replace("_", " ")}. You cannot submit again
+                            until a decision is made.
+                        </p>
                     </div>
                 </div>
             )}
 
             {!activeSubmission && !approvedSubmission && (
-                <div className="mt-8 card p-6">
-                    <h2 className="text-lg font-semibold" style={{ fontFamily: '"Playfair Display", Georgia, serif', color: "var(--foreground)" }}>Submit Your Work</h2>
-                    {(submissionError || error) && <div className="mb-5 mt-4 rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{submissionError || error}</div>}
+                <section className="card mt-8 p-6 sm:p-7">
+                    <SectionMarker index={1}>Submission</SectionMarker>
+                    <h2 className="mt-3 font-display text-xl font-bold text-fg">
+                        Submit Your Work
+                    </h2>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    {(submissionError || error) && (
+                        <AlertBanner
+                            type="error"
+                            className="mt-5"
+                            message={submissionError || error}
+                        />
+                    )}
+
+                    <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                         {[
                             { id: "github_link", label: "GitHub Link *", type: "url", required: true, placeholder: "https://github.com/username/repo" },
                             { id: "live_demo", label: "Live Demo Link", type: "url", placeholder: "https://your-demo-link.com" },
                         ].map((field) => (
-                            <div key={field.id}>
-                                <label htmlFor={field.id} className="label-text">{field.label}</label>
-                                <input id={field.id} name={field.id} type={field.type} value={formData[field.id]} onChange={handleChange} required={field.required} placeholder={field.placeholder} className="input-field" />
-                                {validationErrors?.[field.id] && <p className="mt-1 text-sm" style={{ color: "var(--error)" }}>{validationErrors[field.id][0]}</p>}
-                            </div>
+                            <Field
+                                key={field.id}
+                                label={field.label}
+                                htmlFor={field.id}
+                                error={validationErrors?.[field.id] && validationErrors[field.id][0]}
+                            >
+                                <Input
+                                    id={field.id}
+                                    name={field.id}
+                                    type={field.type}
+                                    value={formData[field.id]}
+                                    onChange={handleChange}
+                                    required={field.required}
+                                    placeholder={field.placeholder}
+                                    invalid={Boolean(validationErrors?.[field.id])}
+                                />
+                            </Field>
                         ))}
+
                         {[
                             { id: "documentation", label: "Documentation", rows: 3, placeholder: "Documentation link or notes..." },
                             { id: "description", label: "Description", rows: 4, placeholder: "Describe your project..." },
                         ].map((field) => (
-                            <div key={field.id}>
-                                <label htmlFor={field.id} className="label-text">{field.label}</label>
-                                <textarea id={field.id} name={field.id} rows={field.rows} value={formData[field.id]} onChange={handleChange} placeholder={field.placeholder} className="input-field resize-none" />
-                            </div>
+                            <Field
+                                key={field.id}
+                                label={field.label}
+                                htmlFor={field.id}
+                                error={validationErrors?.[field.id] && validationErrors[field.id][0]}
+                            >
+                                <Textarea
+                                    id={field.id}
+                                    name={field.id}
+                                    rows={field.rows}
+                                    value={formData[field.id]}
+                                    onChange={handleChange}
+                                    placeholder={field.placeholder}
+                                    className="resize-none"
+                                    invalid={Boolean(validationErrors?.[field.id])}
+                                />
+                            </Field>
                         ))}
-                        <button type="submit" disabled={submitting} className="btn-primary">{submitting ? "Submitting..." : "Submit Project"}</button>
+
+                        <div className="flex flex-wrap gap-3 pt-2">
+                            <Button type="submit" loading={submitting} loadingText="Submitting...">
+                                Submit Project
+                            </Button>
+                        </div>
                     </form>
-                </div>
+                </section>
             )}
         </div>
     );

@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
+import { Bell, CheckCheck } from "lucide-react";
+
 import {
     fetchNotifications,
     markNotificationRead,
@@ -8,6 +10,10 @@ import {
     clearNotificationError,
 } from "../../features/student/notificationSlice";
 import { SkeletonList } from "../../components/common/Skeleton";
+import { PageHeader, AlertBanner, EmptyState } from "../../components/common";
+import Button from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import { cn } from "../../utils/cn";
 
 const Notifications = () => {
     const dispatch = useDispatch();
@@ -21,7 +27,8 @@ const Notifications = () => {
     if (loading) {
         return (
             <div>
-                <div className="mb-6"><h1 className="page-title">Notifications</h1></div>
+                <PageHeader eyebrow="activity feed" title="Notifications" />
+
                 <SkeletonList count={5} />
             </div>
         );
@@ -29,50 +36,88 @@ const Notifications = () => {
 
     return (
         <div>
-            <div className="mb-6">
-                <h1 className="page-title">Notifications</h1>
-                <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>Total {notifications.length} notification(s).</p>
-            </div>
+            <PageHeader
+                eyebrow="activity feed"
+                title="Notifications"
+                subtitle={`Total ${notifications.length} notification(s).`}
+                action={
+                    notifications.length > 0 ? (
+                        <Button
+                            type="button"
+                            onClick={() => dispatch(clearAllNotifications())}
+                            variant="secondary"
+                            size="sm"
+                            disabled={loading}
+                        >
+                            Clear All Notifications
+                        </Button>
+                    ) : null
+                }
+            />
 
-            {notifications.length > 0 && (
-                <button
-                    type="button"
-                    onClick={() => dispatch(clearAllNotifications())}
-                    disabled={loading}
-                    className="btn-secondary mb-5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    Clear All Notifications
-                </button>
-            )}
-
-            {error && <div className="mb-5 rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{error}</div>}
+            {error && <AlertBanner type="error" message={error} />}
 
             {notifications.length === 0 ? (
-                <div className="card p-8 text-center"><p style={{ color: "var(--muted-foreground)" }}>No notifications yet.</p></div>
+                <EmptyState icon={Bell} title="No notifications yet." />
             ) : (
                 <div className="space-y-3">
                     {notifications.map((notification) => (
-                        <div
+                        <article
                             key={notification.id}
-                            className="card p-5"
-                            style={!notification.is_read ? { borderTop: "2px solid var(--accent)" } : {}}
+                            className={cn(
+                                "data-row items-start gap-3.5 p-4 sm:gap-4 sm:p-5",
+                                !notification.is_read && "border-accent/40 bg-accent/8",
+                            )}
                         >
-                            <div className="flex items-start justify-between gap-4">
-<div className="min-w-0 break-words">
-                                    <h2 className="font-medium" style={{ color: "var(--foreground)" }}>
-                                        {notification.title}
-                                        {!notification.is_read && <span className="ml-2 inline-block h-2 w-2 rounded-full" style={{ background: "var(--accent)" }} />}
-                                    </h2>
-                                    <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>{notification.message}</p>
-                                    <p className="mt-2 text-xs" style={{ fontFamily: '"IBM Plex Mono", monospace', color: "var(--muted-foreground)" }}>Type: {notification.type || "-"}</p>
-                                </div>
-                                {!notification.is_read && (
-                                    <button type="button" onClick={() => dispatch(markNotificationRead(notification.id))} className="btn-secondary shrink-0 text-xs">
-                                        Mark as Read
-                                    </button>
+                            <span
+                                aria-hidden="true"
+                                className={cn(
+                                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                                    notification.is_read ? "bg-line-strong" : "bg-accent",
                                 )}
+                            />
+
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                    <h2
+                                        className={cn(
+                                            "break-words font-display text-sm font-bold",
+                                            notification.is_read ? "text-muted" : "text-fg",
+                                        )}
+                                    >
+                                        {notification.title}
+                                    </h2>
+
+                                    {!notification.is_read && (
+                                        <Badge tone="accent" dot>
+                                            Unread
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                <p className="mt-1.5 break-words text-sm leading-relaxed text-muted">
+                                    {notification.message}
+                                </p>
+
+                                <p className="technical-label mt-2.5">
+                                    Type: {notification.type || "-"}
+                                </p>
                             </div>
-                        </div>
+
+                            {!notification.is_read && (
+                                <Button
+                                    type="button"
+                                    onClick={() => dispatch(markNotificationRead(notification.id))}
+                                    variant="secondary"
+                                    size="sm"
+                                    className="shrink-0"
+                                    aria-label={`Mark as Read: ${notification.title}`}
+                                >
+                                    <CheckCheck size={14} />
+                                    Mark as Read
+                                </Button>
+                            )}
+                        </article>
                     ))}
                 </div>
             )}

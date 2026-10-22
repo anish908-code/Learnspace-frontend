@@ -2,15 +2,18 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Download, Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import {
     fetchCertificateDetail,
     clearCurrentCertificate,
     clearCertificateError,
 } from "../../features/student/certificateSlice";
-import { generateQrDataUrl, downloadCertificatePdf } from "../../utils/certificate";
+import { downloadCertificatePdf, generateCertificateQr } from "../../utils/certificate";
+import { Skeleton, SkeletonLine } from "../../components/common/Skeleton";
+import { PageHeader, AlertBanner } from "../../components/common";
 import CertificatePaper from "../../components/CertificatePaper";
+import Button from "../../components/ui/Button";
 
 const CertificateView = () => {
     const dispatch = useDispatch();
@@ -24,8 +27,8 @@ const CertificateView = () => {
     } = useSelector((state) => state.studentCertificates);
     const { user } = useSelector((state) => state.auth);
 
-    const [qrDataUrl, setQrDataUrl] = useState(null);
     const [downloading, setDownloading] = useState(false);
+    const [qrDataUrl, setQrDataUrl] = useState(null);
     const paperRef = useRef(null);
 
     useEffect(() => {
@@ -38,10 +41,7 @@ const CertificateView = () => {
 
     useEffect(() => {
         if (!certificate) return;
-        generateQrDataUrl(
-            certificate?.verification_url ||
-                `${window.location.origin}/certificates/verify/${certificate.certificate_code || ""}`
-        )
+        generateCertificateQr(certificate)
             .then(setQrDataUrl)
             .catch(() => setQrDataUrl(null));
     }, [certificate]);
@@ -54,7 +54,7 @@ const CertificateView = () => {
         try {
             await downloadCertificatePdf({
                 node: paperRef.current,
-                filename: `${certificate.certificate_code || "certificate"}-${studentName
+                filename: `${certificate.certificate_number || "certificate"}-${studentName
                     .toLowerCase()
                     .replace(/\s+/g, "-")}`,
             });
@@ -69,59 +69,65 @@ const CertificateView = () => {
         return (
             <div>
                 {/* back button skeleton */}
-                <div className="mb-4 flex items-center gap-2">
-                    <div className="skeleton h-4 w-4 rounded-full" />
-                    <div className="skeleton h-3 w-28 rounded-full" />
+                <div className="mb-6 flex items-center gap-2">
+                    <Skeleton className="h-4 w-4 rounded-full" />
+                    <SkeletonLine className="h-3 w-28" />
                 </div>
+
                 {/* certificate skeleton */}
-                <div className="card p-4 sm:p-8">
-                    <div className="skeleton aspect-video w-full rounded-md" />
+                <SkeletonLine className="mb-8 h-8 w-56" />
+
+                <div className="card-luxury p-4 sm:p-8">
+                    <Skeleton className="aspect-video w-full rounded-md" />
                 </div>
+
                 {/* action button skeleton */}
-                <div className="mt-5 flex items-center justify-center gap-3">
-                    <div className="skeleton h-10 w-40 rounded-md" />
+                <div className="mt-6 flex items-center justify-center gap-3">
+                    <Skeleton className="h-10 w-40 rounded-xl" />
                 </div>
             </div>
         );
     }
 
     if (error && !certificate) {
-        return (
-            <div className="rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>
-                {error}
-            </div>
-        );
+        return <AlertBanner type="error" message={error} />;
     }
 
     if (!certificate) return null;
 
     return (
         <div>
-            <button
+            <Button
                 type="button"
                 onClick={() => navigate("/student/certificates")}
-                className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium transition hover:underline"
-                style={{ color: "var(--muted-foreground)" }}
+                variant="ghost"
+                size="sm"
+                className="-ml-3 mb-6"
             >
                 <ArrowLeft size={15} />
                 Back to Certificates
-            </button>
+            </Button>
 
-            <div className="card p-4 sm:p-8">
+            <PageHeader
+                eyebrow="earned credential"
+                title={certificate.course?.title || "Certificate"}
+                action={
+                    <Button type="button" onClick={handleDownload} loading={downloading} loadingText="Download PDF">
+                        Download PDF
+                    </Button>
+                }
+            />
+
+            <div className="card-luxury p-4 sm:p-8">
                 <div ref={paperRef}>
                     <CertificatePaper certificate={certificate} qrDataUrl={qrDataUrl} studentName={studentName} />
                 </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                <button type="button" onClick={handleDownload} disabled={downloading} className="btn-primary">
-                    {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                    {downloading ? "Generating PDF..." : "Download PDF"}
-                </button>
-            </div>
-
-            <p className="mt-4 text-center text-xs" style={{ color: "var(--muted-foreground)" }}>
-                LearnSpace — Verified Certificate · {certificate.certificate_code || certificate.certificate_number}
+            <p className="mt-5 text-center">
+                <span className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-subtle">
+                    LearnSpace — Certificate · {certificate.certificate_number}
+                </span>
             </p>
         </div>
     );

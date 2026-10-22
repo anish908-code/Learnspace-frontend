@@ -25,8 +25,14 @@ export const getStudents = () => {
     return api.get("/admin/students");
 };
 
-export const getStudentDetail = (id) => {
-    return api.get(`/admin/students/${id}`);
+/*
+|--------------------------------------------------------------------------
+| ANALYTICS
+|--------------------------------------------------------------------------
+*/
+
+export const getAnalytics = (months = 6) => {
+    return api.get("/admin/analytics", { params: { months } });
 };
 
 /*
@@ -87,10 +93,6 @@ export const getQuizzes = () => {
     return api.get("/admin/quizzes");
 };
 
-export const getQuizDetail = (id) => {
-    return api.get(`/admin/quizzes/${id}`);
-};
-
 export const createQuiz = (data) => {
     return api.post("/admin/quizzes", data);
 };
@@ -107,16 +109,8 @@ export const getQuizQuestions = (quizId) => {
     return api.get(`/admin/quizzes/${quizId}/questions`);
 };
 
-export const createQuestion = (quizId, data) => {
-    return api.post(`/admin/quizzes/${quizId}/questions`, data);
-};
-
 export const bulkCreateQuestions = (quizId, questions) => {
     return api.post(`/admin/quizzes/${quizId}/questions/bulk`, { questions });
-};
-
-export const updateQuestion = (quizId, id, data) => {
-    return api.put(`/admin/quizzes/${quizId}/questions/${id}`, data);
 };
 
 export const deleteQuestion = (quizId, id) => {

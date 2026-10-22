@@ -18,6 +18,7 @@ export const fetchAdminStudents = createAsyncThunk(
 
             return {
                 students: response.data.students,
+                summary: response.data.summary || null,
                 meta: response.data.meta,
             };
         } catch (error) {
@@ -37,6 +38,7 @@ const adminStudentSlice = createSlice({
 
     initialState: {
         students: [],
+        summary: null,
         meta: null,
 
         loading: false,
@@ -60,6 +62,7 @@ const adminStudentSlice = createSlice({
             .addCase(fetchAdminStudents.fulfilled, (state, action) => {
                 state.loading = false;
                 state.students = action.payload.students;
+                state.summary = action.payload.summary;
                 state.meta = action.payload.meta;
             })
 

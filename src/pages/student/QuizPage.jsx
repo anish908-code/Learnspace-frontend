@@ -5,6 +5,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { fetchQuiz, submitQuizAnswers, clearCurrentQuiz, clearQuizError } from "../../features/student/quizSlice";
 import { fetchEnrollments } from "../../features/student/enrollmentSlice";
 import { Skeleton, SkeletonLine } from "../../components/common/Skeleton";
+import { PageHeader, AlertBanner } from "../../components/common";
+import Button from "../../components/ui/Button";
+import { OptionCard } from "../../components/ui/Field";
+import { StatusLabel } from "../../components/ui/Badge";
+import { CornerBrackets } from "../../components/ui/Deco";
 
 const optionLabels = [
     { key: "option_a", label: "A" },
@@ -32,14 +37,14 @@ const QuizPage = () => {
 
     if (loading && !quiz) {
         return (
-            <div className="mx-auto max-w-3xl px-4">
-                <SkeletonLine className="h-6 w-56" />
-                <SkeletonLine className="mt-2 h-3 w-44" />
+            <div className="mx-auto max-w-3xl">
+                <SkeletonLine className="mb-8 h-8 w-64" />
+                <SkeletonLine className="mb-2 h-3 w-44" />
                 <div className="mt-6 space-y-5">
                     {[1,2,3].map((n) => (
-                        <div key={n} className="card p-5">
+                        <div key={n} className="card p-5 sm:p-6">
                             <SkeletonLine className="h-4 w-3/4" />
-                            <div className="mt-4 space-y-2">{[1,2,3,4].map((o) => <Skeleton key={o} className="h-10 w-full rounded-md" />)}</div>
+                            <div className="mt-4 space-y-2.5">{[1,2,3,4].map((o) => <Skeleton key={o} className="h-12 w-full rounded-2xl" />)}</div>
                         </div>
                     ))}
                 </div>
@@ -47,30 +52,39 @@ const QuizPage = () => {
         );
     }
 
-    if (error && !quiz) return <div className="rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{error}</div>;
+    if (error && !quiz) return <AlertBanner type="error" message={error} />;
     if (!quiz) return null;
 
     if (alreadyPassed) {
         return (
-            <div className="mx-auto max-w-xl px-4">
+            <div className="mx-auto max-w-xl">
                 <div className="card p-6 text-center sm:p-8">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "var(--success-bg)" }}>
-                        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ color: "var(--success)" }}>
+                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-teal/10 text-teal">
+                        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                     </div>
-                    <h1 className="text-2xl" style={{ fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 600, color: "var(--success)" }}>
+
+                    <h1 className="font-display text-2xl font-bold text-teal">
                         Already Passed
                     </h1>
-                    <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
+
+                    <p className="mt-3 text-sm text-muted">
                         You have already passed this quiz. No need to retake it.
                     </p>
-                    <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
+
+                    <p className="mt-1.5 text-sm text-muted">
                         Score: {Number(enrollment.final_quiz_score || 0).toFixed(1)}%
                     </p>
-                    <div className="mt-6 flex justify-center gap-3">
-                        <button type="button" onClick={() => navigate("/student/projects")} className="btn-primary">Go to Projects</button>
-                        <button type="button" onClick={() => navigate("/student/courses")} className="btn-secondary">Back to Courses</button>
+
+                    <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                        <Button type="button" onClick={() => navigate("/student/projects")}>
+                            Go to Projects
+                        </Button>
+
+                        <Button type="button" onClick={() => navigate("/student/courses")} variant="secondary">
+                            Back to Courses
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -88,36 +102,54 @@ const QuizPage = () => {
 
     if (result) {
         return (
-            <div className="mx-auto max-w-xl px-4">
-                <div className="card p-6 text-center sm:p-8">
-                    <h1 className="text-2xl" style={{ fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 600, color: result.passed ? "var(--accent)" : "var(--error)" }}>
-                        {result.passed ? "Passed!" : "Not Passed"}
-                    </h1>
-                    <p className="mt-4 text-lg" style={{ color: "var(--foreground)" }}>
-                        Score: {Number(result.score).toFixed(1)}%
-                        <span className="text-sm" style={{ color: "var(--muted-foreground)" }}> (passing: {Number(result.passing_percentage)}%)</span>
-                    </p>
-                    <div className="mt-6 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3 sm:gap-4">
-                        {[
-                            { label: "Questions", value: result.total_questions },
-                            { label: "Correct", value: result.correct_answers },
-                            { label: "Marks", value: `${result.earned_marks}/${result.total_marks}` },
-                        ].map((item) => (
-                            <div key={item.label} className="rounded-md p-3" style={{ background: "var(--muted)" }}>
-                                <p style={{ color: "var(--muted-foreground)" }}>{item.label}</p>
-                                <p className="mt-1 text-lg font-bold" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>{item.value}</p>
-                            </div>
-                        ))}
-                    </div>
-                    <p className="mt-6 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                        {result.passed ? "Congratulations! Course completed. Now unlock your project on the Projects page." : "Try again — you can re-attempt this quiz."}
-                    </p>
-                    <div className="mt-6 flex justify-center gap-3">
-                        {!result.passed ? (
-                            <button type="button" onClick={() => dispatch(fetchQuiz(quizId))} className="btn-primary">Retake Quiz</button>
-                        ) : (
-                            <button type="button" onClick={() => navigate("/student/projects")} className="btn-primary">Go to Project</button>
-                        )}
+            <div className="mx-auto max-w-xl">
+                <div className="card relative overflow-hidden p-6 text-center sm:p-8">
+                    <CornerBrackets />
+
+                    <div className="relative">
+                        <h1 className={`font-display text-2xl font-bold ${result.passed ? "text-accent" : "text-danger"}`}>
+                            {result.passed ? "Passed!" : "Not Passed"}
+                        </h1>
+
+                        <p className="numeric mt-4 text-2xl font-bold text-fg">
+                            Score: {Number(result.score).toFixed(1)}%
+                            <span className="ml-1 text-sm font-medium text-muted">
+                                (passing: {Number(result.passing_percentage)}%)
+                            </span>
+                        </p>
+
+                        <dl className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-line bg-line text-left sm:grid-cols-3">
+                            {[
+                                { label: "Questions", value: result.total_questions },
+                                { label: "Correct", value: result.correct_answers },
+                                { label: "Marks", value: `${result.earned_marks}/${result.total_marks}` },
+                            ].map((item) => (
+                                <div key={item.label} className="bg-surface-2/70 px-4 py-3.5">
+                                    <dt className="technical-label">{item.label}</dt>
+                                    <dd className="mt-1.5 font-display text-lg font-bold text-fg">
+                                        {item.value}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+
+                        <p className="mt-6 text-sm text-muted">
+                            {result.passed
+                                ? "Congratulations! Course completed. Now unlock your project on the Projects page."
+                                : "Try again — you can re-attempt this quiz."}
+                        </p>
+
+                        <div className="mt-7 flex justify-center">
+                            {!result.passed ? (
+                                <Button type="button" onClick={() => dispatch(fetchQuiz(quizId))}>
+                                    Retake Quiz
+                                </Button>
+                            ) : (
+                                <Button type="button" onClick={() => navigate("/student/projects")}>
+                                    Go to Project
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -126,34 +158,56 @@ const QuizPage = () => {
 
     return (
         <div className="mx-auto max-w-3xl">
-            <div className="mb-6">
-                <h1 className="page-title">{quiz.title}</h1>
-                <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>Passing percentage: {Number(quiz.passing_percentage)}%</p>
-            </div>
+            <PageHeader
+                eyebrow="final quiz"
+                title={quiz.title}
+                subtitle={`Passing percentage: ${Number(quiz.passing_percentage)}%`}
+                action={<StatusLabel>{quiz.questions.length} questions</StatusLabel>}
+            />
 
-            {error && <div className="mb-5 rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{error}</div>}
+            {error && <AlertBanner type="error" message={error} />}
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 {quiz.questions.map((question, index) => (
-                    <div key={question.id} className="card p-5">
-                        <h2 className="font-medium" style={{ color: "var(--foreground)" }}>
-                            Q{index + 1}. {question.question}
-                            <span className="ml-2 text-xs" style={{ color: "var(--muted-foreground)" }}>({question.marks} mark{question.marks > 1 ? "s" : ""})</span>
+                    <div key={question.id} className="card p-5 sm:p-6">
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                            <span className="technical-label">Q{index + 1}</span>
+                            <span className="technical-label">
+                                {question.marks} mark{question.marks > 1 ? "s" : ""}
+                            </span>
+                        </div>
+
+                        <h2 className="mt-3 font-display text-base font-semibold leading-snug text-fg">
+                            {question.question}
                         </h2>
-                        <div className="mt-3 space-y-2">
+
+                        <div className="mt-4 space-y-2.5">
                             {optionLabels.map((option) => (
-                                <label key={option.key} className="flex cursor-pointer items-center gap-3 rounded-md border px-4 py-2.5 text-sm transition hover:bg-muted" style={{ borderColor: "var(--border)" }}>
-                                    <input type="radio" name={`question_${question.id}`} checked={answers[question.id] === option.key.replace("option_", "")} onChange={() => handleChange(question.id, option.key)} />
-                                    <span className="font-medium" style={{ color: "var(--muted-foreground)" }}>{option.label}.</span>
-                                    <span style={{ color: "var(--foreground)" }}>{question[option.key]}</span>
-                                </label>
+                                <OptionCard
+                                    key={option.key}
+                                    name={`question_${question.id}`}
+                                    checked={answers[question.id] === option.key.replace("option_", "")}
+                                    onChange={() => handleChange(question.id, option.key)}
+                                >
+                                    <span className="font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-accent">
+                                        {option.label}.
+                                    </span>
+                                    <span className="ml-2">{question[option.key]}</span>
+                                </OptionCard>
                             ))}
                         </div>
                     </div>
                 ))}
-                <button type="submit" disabled={submitting} className="btn-primary w-full">
-                    {submitting ? "Submitting..." : "Submit Quiz"}
-                </button>
+
+                <Button
+                    type="submit"
+                    loading={submitting}
+                    loadingText="Submitting..."
+                    fullWidth
+                    size="lg"
+                >
+                    Submit Quiz
+                </Button>
             </form>
         </div>
     );

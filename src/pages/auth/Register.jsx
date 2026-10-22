@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { UserPlus } from "lucide-react";
 
 import { registerUser } from "../../features/auth/authSlice";
 import { AuthCard, AuthField } from "../../components/auth";
+import { Input } from "../../components/ui/Field";
+import Button from "../../components/ui/Button";
 
 const Register = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const { loading, validationErrors } = useSelector(
-        (state) => state.auth
-    );
+    const { loading, validationErrors } = useSelector((state) => state.auth);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -42,74 +43,70 @@ const Register = () => {
     };
 
     return (
-        <AuthCard title="Create Account" subtitle="Create your LearnSpace account">
+        <AuthCard title="Create account" subtitle="Student is the default role. It takes a minute.">
             <form onSubmit={handleSubmit} className="space-y-5">
-                <AuthField id="name" label="Name" error={validationErrors?.name?.[0]}>
-                    <input
+                <AuthField id="name" label="Full name" error={validationErrors?.name?.[0]}>
+                    <Input
                         id="name"
                         name="name"
                         type="text"
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        placeholder="Enter your name"
-                        className="input-field"
+                        invalid={Boolean(validationErrors?.name?.[0])}
+                        placeholder="Name of User"
                     />
                 </AuthField>
 
                 <AuthField id="email" label="Email" error={validationErrors?.email?.[0]}>
-                    <input
+                    <Input
                         id="email"
                         name="email"
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        placeholder="Enter your email"
-                        className="input-field"
+                        invalid={Boolean(validationErrors?.email?.[0])}
+                        placeholder="you@school.edu"
                     />
                 </AuthField>
 
                 <AuthField id="password" label="Password" error={validationErrors?.password?.[0]}>
-                    <input
+                    <Input
                         id="password"
                         name="password"
                         type="password"
                         value={formData.password}
                         onChange={handleChange}
                         required
+                        invalid={Boolean(validationErrors?.password?.[0])}
                         placeholder="Create a password"
-                        className="input-field"
                     />
                 </AuthField>
 
-                <AuthField id="password_confirmation" label="Confirm Password">
-                    <input
+                <AuthField id="password_confirmation" label="Confirm password">
+                    <Input
                         id="password_confirmation"
                         name="password_confirmation"
                         type="password"
                         value={formData.password_confirmation}
                         onChange={handleChange}
                         required
-                        placeholder="Confirm your password"
-                        className="input-field"
+                        placeholder="Repeat the password"
                     />
                 </AuthField>
 
-                <button type="submit" disabled={loading} className="btn-primary w-full">
-                    {loading ? "Creating Account..." : "Create Account"}
-                </button>
+                <Button type="submit" size="lg" fullWidth loading={loading} loadingText="Creating account…">
+                    <UserPlus size={16} />
+                    Create account
+                </Button>
             </form>
-            <p className="mt-5 text-center text-sm font-medium" style={{ color: "var(--foreground)" }}>
-                Already have an account?{" "}
-                <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                    className="font-semibold transition hover:underline"
-                    style={{ color: "var(--accent)" }}
-                >
-                    Login
-                </button>
+
+            <p className="pt-2 text-center text-sm text-muted">
+                Already registered?{" "}
+                <Link to="/login" className="font-semibold text-accent transition-colors hover:text-accent-bright">
+                    Log in
+                </Link>
             </p>
         </AuthCard>
     );

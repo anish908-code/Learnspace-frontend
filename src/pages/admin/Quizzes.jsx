@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
 
-import { Plus, Pencil, Trash2, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import {
+    Plus,
+    Pencil,
+    Trash2,
+    HelpCircle,
+    ChevronDown,
+    ChevronUp,
+    ListChecks,
+    ArrowRight,
+} from "lucide-react";
 
 import {
     fetchAdminQuizzes,
@@ -14,6 +22,11 @@ import {
 import { fetchAdminQuestions, clearAdminQuestionFeedback } from "../../features/admin/adminQuestionSlice";
 import { fetchAdminCourses } from "../../features/admin/adminCourseSlice";
 import { SkeletonList } from "../../components/common/Skeleton";
+import { PageHeader, EmptyState } from "../../components/common";
+import Button, { ButtonLink } from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import { Field, Input, Select } from "../../components/ui/Field";
+import { SectionMarker } from "../../components/ui/Deco";
 
 const emptyForm = {
     course_id: "",
@@ -24,20 +37,18 @@ const emptyForm = {
 
 const QuizForm = ({ form, setters, courses, onSubmit, onCancel, saving, submitLabel }) => (
     <form
-        className="card space-y-4 border-l-4 border-l-accent p-6"
+        className="card-accent-top space-y-5 p-6 sm:p-7"
         onSubmit={(event) => {
             event.preventDefault();
             onSubmit();
         }}
     >
-        <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
-            <div>
-                <label className="label-text">Course *</label>
-                <select
+        <div className="grid gap-5 sm:grid-cols-[1fr_160px]">
+            <Field label="Course" required>
+                <Select
                     required
                     value={form.course_id}
                     onChange={(e) => setters.setCourseId(e.target.value)}
-                    className="input-field"
                 >
                     <option value="">Select a course</option>
                     {courses.map((course) => (
@@ -45,54 +56,54 @@ const QuizForm = ({ form, setters, courses, onSubmit, onCancel, saving, submitLa
                             {course.title}
                         </option>
                     ))}
-                </select>
-            </div>
+                </Select>
+            </Field>
 
-            <div>
-                <label className="label-text">Pass % *</label>
-                <input
+            <Field label="Pass %" required>
+                <Input
                     type="number"
                     min={0}
                     max={100}
                     required
                     value={form.passing_percentage}
                     onChange={(e) => setters.setPassingPercentage(e.target.value)}
-                    className="input-field"
                 />
-            </div>
+            </Field>
 
-            <div className="sm:col-span-2">
-                <label className="label-text">Title *</label>
-                <input
+            <Field label="Title" required className="sm:col-span-2">
+                <Input
                     type="text"
                     required
                     value={form.title}
                     onChange={(e) => setters.setTitle(e.target.value)}
-                    className="input-field"
                     placeholder="Final Quiz - Web Development"
                 />
-            </div>
+            </Field>
 
-            <div>
-                <label className="label-text">Status</label>
-                <select
+            <Field label="Status">
+                <Select
                     value={form.status}
                     onChange={(e) => setters.setStatus(e.target.value)}
-                    className="input-field"
                 >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
-                </select>
-            </div>
+                </Select>
+            </Field>
         </div>
 
-        <div className="flex gap-3">
-            <button type="submit" disabled={saving} className="btn-primary">
-                {saving ? "Saving..." : submitLabel}
-            </button>
-            <button type="button" onClick={onCancel} className="btn-secondary">
+        <div className="flex flex-wrap gap-3">
+            <Button
+                type="submit"
+                disabled={saving}
+                loading={saving}
+                loadingText="Saving…"
+            >
+                {submitLabel}
+            </Button>
+
+            <Button variant="secondary" type="button" onClick={onCancel}>
                 Cancel
-            </button>
+            </Button>
         </div>
     </form>
 );
@@ -116,47 +127,48 @@ const QuestionsPreview = ({ quizId }) => {
 
     if (loading && !loaded) {
         return (
-            <div className="py-4 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-                Loading questions...
-            </div>
+            <p className="flex items-center justify-center py-6 text-center">
+                <span className="technical-label">Loading questions...</span>
+            </p>
         );
     }
 
     if (questions.length === 0) {
         return (
-            <div className="py-4 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
+            <p className="py-6 text-center text-sm text-muted">
                 No questions yet.
-            </div>
+            </p>
         );
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
             {questions.map((q, idx) => (
                 <div
                     key={q.id}
-                    className="rounded-lg border border-warm-border bg-white px-4 py-3"
+                    className="data-row block px-4 py-3.5"
                 >
-                    <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
+                    <p className="text-sm font-semibold text-fg">
                         {idx + 1}. {q.question}
                     </p>
-                    <div className="mt-1.5 grid gap-1 text-xs sm:grid-cols-2">
+
+                    <div className="mt-2 grid gap-1.5 text-xs sm:grid-cols-2">
                         {["a", "b", "c", "d"].map((key) => (
                             <p
                                 key={key}
                                 className={
                                     q.correct_answer === key
-                                        ? "font-semibold text-emerald-700"
-                                        : ""
+                                        ? "font-semibold text-teal"
+                                        : "text-muted"
                                 }
-                                style={q.correct_answer !== key ? { color: "var(--muted-foreground)" } : undefined}
                             >
                                 {key.toUpperCase()}. {q[`option_${key}`]}
                                 {q.correct_answer === key && " ✓"}
                             </p>
                         ))}
                     </div>
-                    <p className="mt-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+
+                    <p className="numeric mt-2 text-[0.6875rem] text-subtle">
                         Marks: {q.marks}
                     </p>
                 </div>
@@ -264,29 +276,27 @@ const Quizzes = () => {
 
     return (
         <div>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="page-title">Quizzes</h1>
-                    <p className="-mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                        Manage final quizzes ({quizzes.length}).
-                    </p>
-                </div>
-
-                {!showCreate && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setEditingId(null);
-                            setForm(emptyForm);
-                            setShowCreate(true);
-                        }}
-                        className="btn-primary shrink-0"
-                    >
-                        <Plus size={16} />
-                        Add Quiz
-                    </button>
-                )}
-            </div>
+            <PageHeader
+                eyebrow="assessment bank"
+                title="Quizzes"
+                subtitle={`Manage final quizzes (${quizzes.length}).`}
+                action={
+                    !showCreate && (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setEditingId(null);
+                                setForm(emptyForm);
+                                setShowCreate(true);
+                            }}
+                            className="shrink-0"
+                        >
+                            <Plus size={16} />
+                            Add Quiz
+                        </Button>
+                    )
+                }
+            />
 
             {showCreate && (
                 <div className="mb-6">
@@ -302,14 +312,20 @@ const Quizzes = () => {
                 </div>
             )}
 
+            <div className="mb-5">
+                <SectionMarker index={1}>Quiz bank</SectionMarker>
+            </div>
+
             {loading && quizzes.length === 0 ? (
                 <SkeletonList count={3} />
             ) : quizzes.length === 0 ? (
-                <div className="card px-6 py-12 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-                    No quizzes yet. Create your first quiz.
-                </div>
+                <EmptyState
+                    icon={ListChecks}
+                    title="No quizzes yet."
+                    message="Create your first quiz."
+                />
             ) : (
-                <div className="space-y-4">
+                <div className="stagger space-y-3">
                     {quizzes.map((quiz) =>
                         editingId === quiz.id ? (
                             <QuizForm
@@ -323,36 +339,50 @@ const Quizzes = () => {
                                 submitLabel="Save Changes"
                             />
                         ) : (
-                            <div key={quiz.id} className="card overflow-hidden">
-                                <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+                            <div
+                                key={quiz.id}
+                                className="card p-5 sm:p-6"
+                            >
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <h3 className="font-semibold" style={{ fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 600, color: "var(--foreground)" }}>
+                                        <div className="flex flex-wrap items-center gap-2.5">
+                                            <h3 className="truncate font-display text-base font-bold text-fg">
                                                 {quiz.title}
                                             </h3>
-                                            <span
-                                                className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                                                    quiz.status === "published"
-                                                        ? "bg-emerald-100 text-emerald-700"
-                                                        : "bg-muted text-muted-foreground"
-                                                }`}
+
+                                            <Badge
+                                                tone={quiz.status === "published" ? "gold" : "neutral"}
+                                                dot
                                             >
                                                 {quiz.status}
-                                            </span>
+                                            </Badge>
                                         </div>
 
-                                        <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                                            {quiz.course?.title || "-"} - Pass{" "}
-                                            {quiz.passing_percentage}%
-                                        </p>
+                                        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                            <span className="technical-label">
+                                                {quiz.course?.title || "-"}
+                                            </span>
+
+                                            <span
+                                                aria-hidden="true"
+                                                className="text-subtle"
+                                            >
+                                                -
+                                            </span>
+
+                                            <span className="technical-label">
+                                                Pass {quiz.passing_percentage}%
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="flex shrink-0 items-center gap-2">
-                                        <button
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             type="button"
                                             onClick={() => toggleQuestions(quiz.id)}
-                                            className="inline-flex items-center gap-1.5 rounded-lg bg-accent-muted px-3 py-2 text-xs font-semibold transition hover:opacity-80"
-                                            style={{ color: "var(--accent)" }}
+                                            aria-expanded={expandedQuizId === quiz.id}
                                         >
                                             <HelpCircle size={14} />
                                             Questions ({quiz.questions_count ?? "?"})
@@ -361,40 +391,43 @@ const Quizzes = () => {
                                             ) : (
                                                 <ChevronDown size={14} />
                                             )}
-                                        </button>
+                                        </Button>
 
-                                        <Link
+                                        <ButtonLink
                                             to={`/admin/quizzes/${quiz.id}`}
-                                            className="rounded-lg px-3 py-2 text-xs font-medium transition hover:bg-muted"
-                                            style={{ color: "var(--muted-foreground)" }}
+                                            variant="ghost"
+                                            size="sm"
                                         >
                                             Manage
-                                        </Link>
+                                            <ArrowRight size={14} />
+                                        </ButtonLink>
 
-                                        <button
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
                                             type="button"
                                             onClick={() => startEdit(quiz)}
                                             title="Edit"
-                                            className="rounded-lg p-2.5 transition hover:bg-accent-muted"
-                                            style={{ color: "var(--muted-foreground)" }}
+                                            aria-label="Edit"
                                         >
                                             <Pencil size={17} />
-                                        </button>
+                                        </Button>
 
-                                        <button
+                                        <Button
+                                            variant="destructive"
+                                            size="icon-sm"
                                             type="button"
                                             onClick={() => handleDelete(quiz)}
                                             title="Delete"
-                                            className="rounded-lg p-2.5 transition hover:bg-red-50 hover:text-red-600"
-                                            style={{ color: "var(--muted-foreground)" }}
+                                            aria-label="Delete"
                                         >
                                             <Trash2 size={17} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
                                 {expandedQuizId === quiz.id && (
-                                    <div className="border-t border-warm-border bg-muted/50 px-5 py-4">
+                                    <div className="mt-5 border-t border-line pt-5">
                                         <QuestionsPreview quizId={quiz.id} />
                                     </div>
                                 )}

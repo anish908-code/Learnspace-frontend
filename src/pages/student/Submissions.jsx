@@ -1,17 +1,24 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+
+import { CalendarDays, FolderGit2, Link2, MessageSquareQuote } from "lucide-react";
 
 import { fetchSubmissions, clearSubmissionError } from "../../features/student/submissionSlice";
 import { formatDate } from "../../utils/date";
 import { SkeletonList } from "../../components/common/Skeleton";
+import { PageHeader, AlertBanner, EmptyState } from "../../components/common";
+import { ButtonLink } from "../../components/ui/Button";
+import Badge, { StatusLabel } from "../../components/ui/Badge";
 
-const statusStyles = {
-    pending: { background: "#FEFCE8", color: "#92400E" },
-    under_review: { background: "#EBF8FF", color: "#2B6CB0" },
-    approved: { background: "var(--success-bg)", color: "var(--success)" },
-    rejected: { background: "var(--error-bg)", color: "var(--error)" },
-    changes_required: { background: "#FFF5F5", color: "#C53030" },
+/* Status → badge tone. Sirf presentation map hai — label text wahi rehta
+   hai jo backend status se render hota tha. */
+const STATUS_TONES = {
+    pending: "neutral",
+    under_review: "neutral",
+    approved: "teal",
+    rejected: "danger",
+    changes_required: "danger",
+    graded: "accent",
 };
 
 const Submissions = () => {
@@ -26,7 +33,8 @@ const Submissions = () => {
     if (loading) {
         return (
             <div>
-                <div className="mb-6"><h1 className="page-title">My Submissions</h1></div>
+                <PageHeader eyebrow="submission log" title="My Submissions" />
+
                 <SkeletonList count={4} />
             </div>
         );
@@ -34,55 +42,117 @@ const Submissions = () => {
 
     return (
         <div>
-            <div className="mb-6">
-                <h1 className="page-title">My Submissions</h1>
-                <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>Total {submissions.length} submission(s).</p>
-            </div>
+            <PageHeader
+                eyebrow="submission log"
+                title="My Submissions"
+                subtitle={`Total ${submissions.length} submission(s).`}
+            />
 
-            {error && <div className="mb-5 rounded-md px-4 py-3 text-sm" style={{ background: "var(--error-bg)", color: "var(--error)" }}>{error}</div>}
+            {error && <AlertBanner type="error" message={error} />}
 
             {submissions.length === 0 ? (
-                <div className="card p-8 text-center">
-                    <p style={{ color: "var(--muted-foreground)" }}>No submissions yet.</p>
-                    <Link to="/student/projects" className="btn-primary mt-4">Go to Projects</Link>
-                </div>
+                <EmptyState
+                    icon={FolderGit2}
+                    title="No submissions yet."
+                    action={<ButtonLink to="/student/projects">Go to Projects</ButtonLink>}
+                />
             ) : (
                 <div className="space-y-4">
                     {submissions.map((submission) => (
-                        <div key={submission.id} className="card p-5 sm:p-6">
-                            <div className="flex flex-wrap items-start justify-between gap-4">
-                                <div>
-                                    <h2 className="text-lg font-semibold" style={{ fontFamily: '"Playfair Display", Georgia, serif', color: "var(--foreground)" }}>
+                        <article
+                            key={submission.id}
+                            className="card p-5 sm:p-6"
+                        >
+                            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+                                <div className="min-w-0">
+                                    <StatusLabel status={submission.status}>
+                                        {submission.status.replace("_", " ")}
+                                    </StatusLabel>
+
+                                    <h2 className="mt-2.5 break-words font-display text-lg font-bold text-fg">
                                         {submission.project?.title || `Project #${submission.project_id}`}
                                     </h2>
-                                    <p className="mt-1 text-sm" style={{ color: "var(--muted-foreground)" }}>Submitted on: {formatDate(submission.submitted_at)}</p>
+
+                                    <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
+                                        <CalendarDays
+                                            size={14}
+                                            strokeWidth={2}
+                                            aria-hidden="true"
+                                            className="shrink-0 text-subtle"
+                                        />
+                                        Submitted on: {formatDate(submission.submitted_at)}
+                                    </p>
                                 </div>
-                                <span className="rounded-md px-3 py-1 text-xs font-medium" style={statusStyles[submission.status] || { background: "var(--muted)", color: "var(--muted-foreground)" }}>
+
+                                <Badge
+                                    tone={STATUS_TONES[submission.status] || "neutral"}
+                                    dot
+                                    className="shrink-0 capitalize"
+                                >
                                     {submission.status.replace("_", " ")}
-                                </span>
+                                </Badge>
                             </div>
 
-                            <div className="mt-4 space-y-2 border-t pt-4 text-sm" style={{ borderColor: "var(--border)" }}>
-                                <p className="flex items-center gap-1" style={{ color: "var(--foreground)" }}>
-                                    <span className="shrink-0">GitHub:</span>
-                                    <a href={submission.github_link} target="_blank" rel="noreferrer" className="min-w-0 truncate transition hover:underline" style={{ color: "var(--accent)" }}>{submission.github_link}</a>
+                            <div className="mt-4 space-y-2 border-t border-line pt-4 text-sm text-fg">
+                                <p className="flex items-center gap-1.5">
+                                    <span className="shrink-0 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-subtle">
+                                        GitHub:
+                                    </span>
+                                    <a
+                                        href={submission.github_link}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex min-w-0 items-center gap-1.5 truncate font-medium text-accent transition-colors hover:text-accent-bright hover:underline"
+                                    >
+                                        <Link2 size={13} strokeWidth={2.2} aria-hidden="true" className="shrink-0" />
+                                        <span className="truncate">{submission.github_link}</span>
+                                    </a>
                                 </p>
+
                                 {submission.live_demo && (
-                                    <p className="flex items-center gap-1" style={{ color: "var(--foreground)" }}>
-                                        <span className="shrink-0">Live Demo:</span>
-                                        <a href={submission.live_demo} target="_blank" rel="noreferrer" className="min-w-0 truncate transition hover:underline" style={{ color: "var(--accent)" }}>{submission.live_demo}</a>
+                                    <p className="flex items-center gap-1.5">
+                                        <span className="shrink-0 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-subtle">
+                                            Live Demo:
+                                        </span>
+                                        <a
+                                            href={submission.live_demo}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex min-w-0 items-center gap-1.5 truncate font-medium text-accent transition-colors hover:text-accent-bright hover:underline"
+                                        >
+                                            <Link2 size={13} strokeWidth={2.2} aria-hidden="true" className="shrink-0" />
+                                            <span className="truncate">{submission.live_demo}</span>
+                                        </a>
                                     </p>
                                 )}
-                                {submission.description && <p className="whitespace-pre-wrap" style={{ color: "var(--muted-foreground)" }}>{submission.description}</p>}
+
+                                {submission.description && (
+                                    <p className="whitespace-pre-wrap leading-relaxed text-muted">
+                                        {submission.description}
+                                    </p>
+                                )}
                             </div>
 
                             {submission.feedback && (
-                                <div className="mt-4 rounded-md p-4" style={{ background: "var(--muted)" }}>
-                                    <p className="section-label text-[10px]">Admin Feedback</p>
-                                    <p className="mt-1 whitespace-pre-wrap text-sm" style={{ color: "var(--foreground)" }}>{submission.feedback}</p>
+                                <div className="surface-technical relative mt-4 overflow-hidden rounded-2xl p-4 sm:p-5">
+                                    <span
+                                        aria-hidden="true"
+                                        className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-gold/50 to-transparent"
+                                    />
+
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="icon-well h-8 w-8 shrink-0 text-gold">
+                                            <MessageSquareQuote size={15} strokeWidth={2.1} />
+                                        </span>
+                                        <span className="technical-label">Admin Feedback</span>
+                                    </div>
+
+                                    <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-fg">
+                                        {submission.feedback}
+                                    </p>
                                 </div>
                             )}
-                        </div>
+                        </article>
                     ))}
                 </div>
             )}

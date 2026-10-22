@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { Award, Plus, Loader2, X, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Award, Plus, X, Eye, EyeOff, Trash2 } from "lucide-react";
 
 import {
     fetchAdminCertificates,
@@ -11,10 +11,14 @@ import {
 } from "../../features/admin/adminCertificateSlice";
 import { fetchAdminStudents } from "../../features/admin/adminStudentSlice";
 import { fetchAdminCourses } from "../../features/admin/adminCourseSlice";
-import { generateQrDataUrl } from "../../utils/certificate";
 import { formatDate } from "../../utils/date";
-import { PageHeader } from "../../components/common";
+import { generateCertificateQr } from "../../utils/certificate";
+import { PageHeader, EmptyState } from "../../components/common";
+import { SkeletonList } from "../../components/common/Skeleton";
 import CertificatePaper from "../../components/CertificatePaper";
+import Button from "../../components/ui/Button";
+import { Field, Select } from "../../components/ui/Field";
+import { SectionMarker } from "../../components/ui/Deco";
 
 const AdminCertificates = () => {
     const dispatch = useDispatch();
@@ -25,6 +29,7 @@ const AdminCertificates = () => {
         saving,
         deleting,
     } = useSelector((state) => state.adminCertificates);
+    const studentsLoading = useSelector((state) => state.adminStudents?.loading);
     const students = useSelector((state) => state.adminStudents?.students || []);
     const courses = useSelector((state) => state.adminCourses?.courses || []);
 
@@ -44,22 +49,14 @@ const AdminCertificates = () => {
         };
     }, [dispatch]);
 
-    const loadQr = useCallback(async (cert) => {
-        if (qrUrls[cert.id]) return;
-        try {
-            const url = await generateQrDataUrl(
-                cert?.verification_url ||
-                    `${window.location.origin}/certificates/verify/${cert.certificate_code || ""}`
-            );
-            setQrUrls((prev) => ({ ...prev, [cert.id]: url }));
-        } catch {
-            /* ignore */
-        }
-    }, [qrUrls]);
-
     useEffect(() => {
-        certificates.forEach((cert) => loadQr(cert));
-    }, [certificates, loadQr]);
+        certificates.forEach((certificate) => {
+            if (qrUrls[certificate.id]) return;
+            generateCertificateQr(certificate)
+                .then((url) => setQrUrls((current) => ({ ...current, [certificate.id]: url })))
+                .catch(() => {});
+        });
+    }, [certificates, qrUrls]);
 
     const toggleExpand = useCallback(
         (id) => {
@@ -90,7 +87,7 @@ const AdminCertificates = () => {
         async (id) => {
             if (
                 !window.confirm(
-                    "Delete this certificate? The student will no longer see it and the verification link will stop working."
+                    "Delete this certificate? The student will no longer see it."
                 )
             ) {
                 return;
@@ -103,93 +100,123 @@ const AdminCertificates = () => {
     return (
         <div>
             <PageHeader
+                eyebrow="credential registry"
                 title="Certificates"
                 subtitle="Issue and manage course completion certificates."
                 action={
-                    <button type="button" onClick={() => setShowModal(true)} className="btn-primary">
+                    <Button type="button" onClick={() => setShowModal(true)}>
                         <Plus size={16} />
                         Issue Certificate
-                    </button>
+                    </Button>
                 }
             />
 
+            <div className="mb-5">
+                <SectionMarker index={1}>Issued certificates</SectionMarker>
+            </div>
+
             {loading && certificates.length === 0 ? (
-                <div className="space-y-3">
-                    {Array.from({ length: 3 }, (_, i) => (
-                        <div key={i} className="card overflow-hidden">
-                            <div className="flex items-center justify-between px-5 py-4">
-                                <div className="flex-1 space-y-2">
-                                    <div className="skeleton h-3.5 w-48 rounded-full" />
-                                    <div className="skeleton h-3 w-32 rounded-full" />
-                                </div>
-                                <div className="skeleton h-8 w-36 shrink-0 rounded-md" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <SkeletonList count={3} />
             ) : certificates.length === 0 ? (
-                <div className="card p-12 text-center">
-                    <Award size={32} className="mx-auto" style={{ color: "var(--border)" }} />
-                    <p className="mt-3 font-semibold" style={{ color: "var(--foreground)" }}>
-                        No certificates issued yet
-                    </p>
-                    <button type="button" onClick={() => setShowModal(true)} className="btn-secondary mt-4">
-                        <Plus size={16} /> Issue the first certificate
-                    </button>
-                </div>
+                <EmptyState
+                    icon={Award}
+                    title="No certificates issued yet"
+                    action={
+                        <Button
+                            variant="secondary"
+                            type="button"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <Plus size={16} /> Issue the first certificate
+                        </Button>
+                    }
+                />
             ) : (
-                <div className="space-y-3">
+                <div className="stagger space-y-3">
                     {certificates.map((certificate) => {
                         const isOpen = expandedId === certificate.id;
                         return (
                             <div key={certificate.id} className="card overflow-hidden">
                                 {/* Clickable header row */}
-                                <div className="flex w-full items-center justify-between gap-3 px-5 py-4 transition hover:bg-black/5" style={{ background: isOpen ? "var(--muted)" : undefined }}>
+                                <div
+                                    className={`flex w-full flex-wrap items-center justify-between gap-3 px-4 py-4 transition-colors duration-200 sm:px-5 ${
+                                        isOpen
+                                            ? "bg-surface-2/70"
+                                            : "hover:bg-surface-2/50"
+                                    }`}
+                                >
                                     <button
                                         type="button"
                                         onClick={() => toggleExpand(certificate.id)}
+                                        aria-expanded={isOpen}
                                         className="flex min-w-0 flex-1 items-center gap-3 text-left"
                                     >
-                                        <div className="min-w-0 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                                            <span className="font-semibold" style={{ color: "var(--foreground)" }}>
+                                        <span className="icon-well h-9 w-9 shrink-0 text-gold">
+                                            <Award size={16} strokeWidth={2.1} />
+                                        </span>
+
+                                        <span className="min-w-0 text-sm">
+                                            <span className="block truncate font-display text-sm font-bold text-fg">
                                                 {certificate.student?.user?.name || `Student #${certificate.student_id}`}
                                             </span>
-                                            <span className="mx-2">·</span>
-                                            {certificate.course?.title || `Course #${certificate.course_id}`}
-                                            <span className="mx-2">·</span>
-                                            <span className="font-mono text-xs">{certificate.certificate_code}</span>
-                                            <span className="mx-2">·</span>
-                                            {formatDate(certificate.issue_date)}
-                                        </div>
+
+                                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
+                                                <span className="truncate">
+                                                    {certificate.course?.title || `Course #${certificate.course_id}`}
+                                                </span>
+
+                                                <span aria-hidden="true" className="text-subtle">
+                                                    ·
+                                                </span>
+
+                                                <span className="numeric text-[0.6875rem] text-fg">
+                                                    {certificate.certificate_number}
+                                                </span>
+
+                                                <span aria-hidden="true" className="text-subtle">
+                                                    ·
+                                                </span>
+
+                                                <span className="numeric text-[0.6875rem] text-subtle">
+                                                    {formatDate(certificate.issue_date)}
+                                                </span>
+                                            </span>
+                                        </span>
                                     </button>
 
                                     <div className="flex shrink-0 items-center gap-2">
-                                        <button
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             type="button"
                                             onClick={() => toggleExpand(certificate.id)}
-                                            className="flex items-center gap-1.5 text-sm font-medium transition hover:opacity-70"
-                                            style={{ color: "var(--accent)" }}
+                                            aria-expanded={isOpen}
                                         >
                                             {isOpen ? <EyeOff size={16} /> : <Eye size={16} />}
                                             {isOpen ? "Hide" : "View"}
-                                        </button>
-                                        <button
+                                        </Button>
+
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
                                             type="button"
                                             onClick={() => handleDelete(certificate.id)}
                                             disabled={deleting}
-                                            className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition hover:opacity-70"
-                                            style={{ color: "var(--error)", background: "rgba(220,38,38,0.08)" }}
+                                            loading={deleting}
+                                            loadingText="Deleting…"
                                             title="Delete certificate"
                                         >
-                                            {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                                            <Trash2 size={15} />
                                             Delete
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
                                 {isOpen && (
-                                    <div className="border-t p-4 sm:p-6" style={{ borderColor: "var(--border)" }}>
-                                        <CertificatePaper certificate={certificate} qrDataUrl={qrUrls[certificate.id]} />
+                                    <div className="border-t border-line bg-bg-2/40 p-4 sm:p-6">
+                                        <div className="card-luxury p-3 sm:p-6">
+                                            <CertificatePaper certificate={certificate} qrDataUrl={qrUrls[certificate.id]} />
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -199,56 +226,90 @@ const AdminCertificates = () => {
             )}
 
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
-                    <div className="card w-full max-w-lg p-6">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
-                                Issue Certificate
-                            </h2>
-                            <button type="button" onClick={() => setShowModal(false)} className="rounded p-1 hover:bg-black/5">
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleGenerate} className="space-y-4">
+                <div
+                    className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgb(4_5_8)]/55 p-4 sm:items-center"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Issue certificate"
+                >
+                    <div className="card my-auto w-full max-w-lg p-6">
+                        <div className="mb-5 flex items-center justify-between gap-4 border-b border-line pb-4">
                             <div>
-                                <label className="mb-1 block text-sm font-medium">Student</label>
-                                <select value={studentId} onChange={(e) => setStudentId(e.target.value)} className="input w-full" required>
-                                    <option value="">Select student</option>
-                                    {students.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.user?.name || `Student #${s.id}`}
-                                        </option>
-                                    ))}
-                                </select>
-                                {submitted && !studentId && (
-                                    <p className="mt-1 text-xs" style={{ color: "var(--error)" }}>Please select a student.</p>
-                                )}
+                                <span className="technical-label">Credential</span>
+                                <h2 className="mt-1.5 font-display text-xl font-bold text-fg">
+                                    Issue Certificate
+                                </h2>
                             </div>
 
-                            <div>
-                                <label className="mb-1 block text-sm font-medium">Course</label>
-                                <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="input w-full" required>
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                type="button"
+                                onClick={() => setShowModal(false)}
+                                aria-label="Close"
+                            >
+                                <X size={18} />
+                            </Button>
+                        </div>
+
+                        <form onSubmit={handleGenerate} className="space-y-5">
+                            <Field
+                                label="Student"
+                                required
+                                error={submitted && !studentId ? "Please select a student." : undefined}
+                            >
+                                <Select
+                                    value={studentId}
+                                    onChange={(e) => setStudentId(e.target.value)}
+                                    invalid={submitted && !studentId}
+                                    required
+                                >
+                                    <option value="">Select student</option>
+                                    {studentsLoading && students.length === 0 ? (
+                                        <option value="" disabled>Loading students...</option>
+                                    ) : (
+                                        students.map((s) => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.user?.name || `Student #${s.id}`}
+                                            </option>
+                                        ))
+                                    )}
+                                </Select>
+                            </Field>
+
+                            <Field
+                                label="Course"
+                                required
+                                error={submitted && !courseId ? "Please select a course." : undefined}
+                            >
+                                <Select
+                                    value={courseId}
+                                    onChange={(e) => setCourseId(e.target.value)}
+                                    invalid={submitted && !courseId}
+                                    required
+                                >
                                     <option value="">Select course</option>
                                     {courses.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.title || `Course #${c.id}`}
                                         </option>
                                     ))}
-                                </select>
-                                {submitted && !courseId && (
-                                    <p className="mt-1 text-xs" style={{ color: "var(--error)" }}>Please select a course.</p>
-                                )}
-                            </div>
+                                </Select>
+                            </Field>
 
-                            <div className="flex justify-end gap-2 pt-2">
-                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+                            <div className="flex flex-wrap justify-end gap-2 pt-2">
+                                <Button variant="secondary" type="button" onClick={() => setShowModal(false)}>
                                     Cancel
-                                </button>
-                                <button type="submit" disabled={saving} className="btn-primary">
-                                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Award size={16} />}
-                                    {saving ? "Issuing..." : "Issue Certificate"}
-                                </button>
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={saving}
+                                    loading={saving}
+                                    loadingText="Issuing…"
+                                >
+                                    <Award size={16} />
+                                    Issue Certificate
+                                </Button>
                             </div>
                         </form>
                     </div>

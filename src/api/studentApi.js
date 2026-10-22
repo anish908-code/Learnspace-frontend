@@ -106,10 +106,6 @@ export const createSubmission = (data) => {
     return api.post("/student/submissions", data);
 };
 
-export const getSubmissionDetail = (id) => {
-    return api.get(`/student/submissions/${id}`);
-};
-
 /*
 |--------------------------------------------------------------------------
 | CERTIFICATES

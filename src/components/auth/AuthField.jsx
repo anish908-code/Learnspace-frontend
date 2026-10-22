@@ -1,13 +1,17 @@
+import { Field } from "../ui/Field";
+
+/*
+|--------------------------------------------------------------------------
+| AuthField
+|--------------------------------------------------------------------------
+| Auth pages ka field wrapper. Validation UI ek hi jagah se aati hai
+| (ui/Field) — isliye yahan koi duplicate styling nahi.
+*/
+
 const AuthField = ({ id, label, error, children }) => (
-    <div>
-        <label htmlFor={id} className="label-text">{label}</label>
+    <Field label={label} htmlFor={id} error={error}>
         {children}
-        {error && (
-            <p className="mt-1 text-sm font-medium" style={{ color: "var(--error)" }}>
-                {error}
-            </p>
-        )}
-    </div>
+    </Field>
 );
 
 export default AuthField;
